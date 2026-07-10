@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Manuais de Serviço — Motos</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <h1>🔧 Manuais de Serviço — Motos</h1>
+    <div class="user-box">
+      <span id="username-label"></span>
+      <button class="logout" id="logout-btn">Sair</button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <input type="search" id="filter-input" placeholder="Filtrar por marca ou modelo..." />
+    <div id="manual-list"></div>
+  </aside>
+
+  <main class="content" id="content">
+    <div class="empty-state">Selecione uma moto na lista ao lado.</div>
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

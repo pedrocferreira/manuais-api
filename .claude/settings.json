@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(netsh int ipv4 show excludedportrange protocol=tcp)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=39940\")",
+      "PowerShell(Stop-Process -Id 39940 -Force)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -i -X POST http://127.0.0.1:8000/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"username\\\\\":\\\\\"leticia\\\\\",\\\\\"password\\\\\":\\\\\"teste12345\\\\\"}\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import dotenv; print\\('dotenv ok'\\)\")",
+      "Bash(python -c \"from google import genai; print\\('genai ok'\\)\")",
+      "Bash(curl -s -b /tmp/cookies3.txt -X POST \"http://127.0.0.1:8020/manuals/yamaha-mt07-2016/ask\" -H \"Content-Type: application/json\" -d \"{\\\\\"question\\\\\":\\\\\"qual o torque do parafuso de dreno de oleo?\\\\\"}\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 8020 -ErrorAction SilentlyContinue | Select-Object OwningProcess\")",
+      "Bash(powershell -Command \"Get-CimInstance Win32_Process -Filter 'ProcessId=20372' | Select-Object ProcessId, CommandLine\")",
+      "Bash(powershell -Command \"Stop-Process -Id 20372 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 18296 -Force\")"
+    ]
+  }
+}

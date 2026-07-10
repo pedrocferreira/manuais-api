@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login — Manuais de Serviço</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <h1>Manuais de Serviço</h1>
+    <p class="subtitle">Entre com seu usuário para consultar os manuais.</p>
+    <form id="login-form">
+      <label for="username">Usuário</label>
+      <input type="text" id="username" autocomplete="username" required autofocus />
+      <label for="password">Senha</label>
+      <input type="password" id="password" autocomplete="current-password" required />
+      <div class="error-box" id="error-box"></div>
+      <button type="submit" class="primary" id="submit-btn">Entrar</button>
+    </form>
+  </div>
+</div>
+<script>
+const form = document.getElementById("login-form");
+const errorBox = document.getElementById("error-box");
+const submitBtn = document.getElementById("submit-btn");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errorBox.style.display = "none";
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Entrando...";
+  try {
+    const res = await fetch("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        username: document.getElementById("username").value.trim(),
+        password: document.getElementById("password").value,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      errorBox.textContent = data.detail || "Usuário ou senha inválidos.";
+      errorBox.style.display = "block";
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Entrar";
+      return;
+    }
+    window.location.href = "/";
+  } catch (err) {
+    errorBox.textContent = "Não foi possível conectar ao servidor.";
+    errorBox.style.display = "block";
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Entrar";
+  }
+});
+</script>
+</body>
+</html>
