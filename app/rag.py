@@ -11,7 +11,7 @@ import sqlite3
 from . import search
 
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-MAX_CONTEXT_PAGES = 8
+MAX_CONTEXT_PAGES = 12
 
 
 def has_llm() -> bool:
@@ -87,13 +87,17 @@ def answer(con: sqlite3.Connection, manual: dict, question: str) -> dict:
     response = client.models.generate_content(
         model=GEMINI_MODEL,
         config=types.GenerateContentConfig(
-            max_output_tokens=1500,
+            max_output_tokens=8192,
             system_instruction=(
                 "Voce e um assistente tecnico para mecanicos de motocicletas. Responda em portugues, "
-                "de forma pratica e objetiva, usando SOMENTE as paginas do manual de servico fornecidas. "
-                "Sempre cite as paginas usadas no formato [p. N] junto a cada informacao. "
-                "Inclua valores de torque, folgas e especificacoes exatamente como estao no manual. "
-                "Se a informacao nao estiver nas paginas fornecidas, diga isso claramente. "
+                "de forma completa e detalhada, usando SOMENTE as paginas do manual de servico fornecidas. "
+                "Nao resuma demais: descreva o procedimento passo a passo quando houver um no manual, "
+                "na ordem em que aparece, incluindo ferramentas especiais, ordem de desmontagem/montagem "
+                "e avisos de seguranca ou cuidado mencionados. "
+                "Liste TODAS as especificacoes relacionadas encontradas nas paginas (torque, folgas, "
+                "capacidades, tolerancias, limites de desgaste), nao so o primeiro valor que aparecer. "
+                "Sempre cite a pagina de cada informacao no formato [p. N] logo apos ela. "
+                "Se a informacao nao estiver nas paginas fornecidas, diga isso claramente em vez de inventar. "
                 "Ao final, liste em uma linha 'PAGINAS: N, N, N' com as paginas realmente usadas."
             ),
         ),
