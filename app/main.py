@@ -9,11 +9,11 @@ load_dotenv()
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import auth, db, rag, search
+from . import auth, db, pages, rag, search
 
 STATIC_DIR = db.BASE / "app" / "static"
 
@@ -134,7 +134,13 @@ def search_manual(manual_id: str, q: str = Query(min_length=2), limit: int = Que
     return {
         "manual_id": manual_id,
         "query": q,
-        "results": [r | {"pdf_url": f"/manuals/{manual_id}/pdf#page={r['page']}"} for r in results],
+        "results": [
+            r | {
+                "pdf_url": f"/manuals/{manual_id}/pdf#page={r['page']}",
+                "image_url": pages.image_url(manual_id, r["page"], terms),
+            }
+            for r in results
+        ],
     }
 
 
@@ -146,9 +152,30 @@ def ask_manual(manual_id: str, body: AskRequest, user: dict = Depends(auth.get_c
     con = db.get_con()
     result = rag.answer(con, manual, body.question)
     con.close()
+    terms = result.get("terms", [])
     for r in result["references"]:
         r["pdf_url"] = f"/manuals/{manual_id}/pdf#page={r['page']}"
+        r["image_url"] = pages.image_url(manual_id, r["page"], terms)
     return {"manual_id": manual_id, "question": body.question} | result
+
+
+@app.get("/manuals/{manual_id}/pages/{page}/image")
+def get_page_image(manual_id: str, page: int,
+                   highlight: str | None = Query(None, description="termos separados por virgula"),
+                   zoom: float = Query(2.0, ge=1.0, le=4.0),
+                   user: dict = Depends(auth.get_current_user)):
+    """Renderiza a pagina do PDF como PNG, destacando os termos em amarelo.
+
+    Funciona tambem para os manuais escaneados (a pagina e imagem, so nao ha destaque).
+    """
+    manual = _get_manual_or_404(manual_id)
+    terms = [t.strip() for t in highlight.split(",")] if highlight else []
+    try:
+        png = pages.render_page_png(manual, page, zoom, terms)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    return Response(png, media_type="image/png",
+                    headers={"Cache-Control": "private, max-age=86400"})
 
 
 @app.get("/manuals/{manual_id}/pdf")

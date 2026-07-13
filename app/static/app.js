@@ -164,7 +164,7 @@ async function runAsk(manualId) {
       html += `<div class="notice ${data.mode === "search" ? "info" : "warn"}">${escapeHtml(data.message)}</div>`;
     }
     if (data.answer) {
-      html += `<div class="answer-box">${escapeHtml(data.answer)}</div>`;
+      html += renderAnswerHtml(data);
     }
     html += renderReferences(data.references || []);
     resultBox.innerHTML = html;
@@ -199,6 +199,44 @@ async function runSearch(manualId) {
   }
 }
 
+function renderAnswerHtml(data) {
+  let html = marked.parse(data.answer || "", { breaks: true });
+  html = sanitizeHtml(html);
+
+  // [p. 44] ou [p. 44, 119] viram botoes que abrem a imagem da pagina
+  const refMap = {};
+  for (const r of data.references || []) refMap[r.page] = r.image_url;
+  // aceita [p. 44], [p. 44, 119], [p. 44, p. 119], [páginas 44 e 119]...
+  html = html.replace(/\[\s*p(?:áginas?|aginas?|p?\.)?[\s.]*([\d\s,e.p]+?)\s*\]/gi, (match, nums) => {
+    const pages = nums.match(/\d+/g) || [];
+    if (pages.length === 0) return match;
+    return pages
+      .map((p) => {
+        const img = refMap[p] || `/manuals/${data.manual_id}/pages/${p}/image`;
+        return `<button type="button" class="cite" data-image="${img}" data-page="${p}" title="Ver página ${p} do manual">p. ${p}</button>`;
+      })
+      .join(" ");
+  });
+  return `<div class="answer-box md">${html}</div>`;
+}
+
+// Remove qualquer HTML perigoso que venha no markdown (a resposta vem de um LLM)
+function sanitizeHtml(html) {
+  const t = document.createElement("template");
+  t.innerHTML = html;
+  t.content.querySelectorAll("script, style, iframe, object, embed, link, form").forEach((n) => n.remove());
+  t.content.querySelectorAll("*").forEach((n) => {
+    for (const attr of [...n.attributes]) {
+      const name = attr.name.toLowerCase();
+      const val = attr.value.trim().toLowerCase();
+      if (name.startsWith("on") || ((name === "href" || name === "src") && val.startsWith("javascript:"))) {
+        n.removeAttribute(attr.name);
+      }
+    }
+  });
+  return t.innerHTML;
+}
+
 function renderReferences(refs) {
   if (refs.length === 0) {
     return '<div class="notice info">Nenhuma página relevante encontrada.</div>';
@@ -207,16 +245,52 @@ function renderReferences(refs) {
     .map(
       (r) => `
     <div class="ref-card ${r.cited ? "cited" : ""}">
-      <div class="ref-top">
-        <span class="page-tag">Página ${r.page}${r.cited ? " · citada na resposta" : ""}</span>
-        <a class="open-pdf" href="${r.pdf_url}" target="_blank" rel="noopener">Abrir PDF →</a>
+      ${r.image_url ? `
+      <div class="ref-thumb" data-image="${r.image_url}" data-page="${r.page}" title="Ampliar página ${r.page}">
+        <img src="${r.image_url}" loading="lazy" alt="Página ${r.page} do manual" />
+      </div>` : ""}
+      <div class="ref-body">
+        <div class="ref-top">
+          <span class="page-tag">Página ${r.page}${r.cited ? " · citada na resposta" : ""}</span>
+          <a class="open-pdf" href="${r.pdf_url}" target="_blank" rel="noopener">Abrir PDF →</a>
+        </div>
+        <div class="snippet">${escapeHtml(r.snippet || "")}</div>
       </div>
-      <div class="snippet">${escapeHtml(r.snippet || "")}</div>
     </div>
   `
     )
     .join("");
   return `<div class="ref-list">${cards}</div>`;
+}
+
+// Lightbox: clique na miniatura abre a página inteira por cima da tela
+document.addEventListener("click", (e) => {
+  const thumb = e.target.closest(".ref-thumb, .cite");
+  if (thumb) {
+    openLightbox(thumb.dataset.image, thumb.dataset.page);
+    return;
+  }
+  if (e.target.closest(".lightbox")) closeLightbox();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeLightbox();
+});
+
+function openLightbox(src, page) {
+  closeLightbox();
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.innerHTML = `
+    <div class="lightbox-inner">
+      <div class="lightbox-bar">Página ${page} — clique para fechar (Esc)</div>
+      <img src="${src}" alt="Página ${page} do manual" />
+    </div>`;
+  document.body.appendChild(box);
+}
+
+function closeLightbox() {
+  document.querySelector(".lightbox")?.remove();
 }
 
 function escapeHtml(str) {
