@@ -7,13 +7,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+import pathlib
+import uuid
+from datetime import datetime
+
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import auth, db, pages, rag, search
+from . import auth, db, indexer, pages, rag, search
 
 STATIC_DIR = db.BASE / "app" / "static"
 
@@ -48,9 +52,27 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RejectSubmissionRequest(BaseModel):
+    reason: str | None = None
+
+
 @app.get("/login")
 def login_page():
     return FileResponse(STATIC_DIR / "login.html")
+
+
+@app.get("/admin")
+def admin_page(request: Request):
+    token = request.cookies.get(auth.COOKIE_NAME)
+    username = auth._decode_token(token) if token else None
+    if not username:
+        return FileResponse(STATIC_DIR / "login.html")
+    con = db.get_con()
+    user = auth.get_user(con, username)
+    con.close()
+    if not user or not user.get("is_admin"):
+        raise HTTPException(403, "Acesso restrito a administradores")
+    return FileResponse(STATIC_DIR / "admin.html")
 
 
 @app.get("/")
@@ -65,13 +87,13 @@ def index(request: Request):
 def login(body: LoginRequest):
     con = db.get_con()
     row = con.execute(
-        "SELECT username, password_hash FROM users WHERE username = ?", (body.username.strip().lower(),)
+        "SELECT username, password_hash, is_admin FROM users WHERE username = ?", (body.username.strip().lower(),)
     ).fetchone()
     con.close()
     if not row or not auth.verify_password(body.password, row["password_hash"]):
         raise HTTPException(401, "Usuario ou senha invalidos")
     token = auth.create_token(row["username"])
-    response = JSONResponse({"ok": True, "username": row["username"]})
+    response = JSONResponse({"ok": True, "username": row["username"], "is_admin": bool(row["is_admin"])})
     response.set_cookie(
         auth.COOKIE_NAME, token, httponly=True, samesite="lax", max_age=auth.TOKEN_TTL_SECONDS,
     )
@@ -126,7 +148,6 @@ def search_manual(manual_id: str, q: str = Query(min_length=2), limit: int = Que
         raise HTTPException(422, "Este manual e escaneado (sem texto) e ainda nao foi indexado com OCR.")
     con = db.get_con()
     terms = search.extract_terms(q)
-    # tenta AND (mais preciso); se nada, cai para OR (mais abrangente)
     results = search.search_pages(con, manual_id, search.build_fts_query(terms, "AND"), limit)
     if not results:
         results = search.search_pages(con, manual_id, search.build_fts_query(terms, "OR"), limit)
@@ -164,10 +185,6 @@ def get_page_image(manual_id: str, page: int,
                    highlight: str | None = Query(None, description="termos separados por virgula"),
                    zoom: float = Query(2.0, ge=1.0, le=4.0),
                    user: dict = Depends(auth.get_current_user)):
-    """Renderiza a pagina do PDF como PNG, destacando os termos em amarelo.
-
-    Funciona tambem para os manuais escaneados (a pagina e imagem, so nao ha destaque).
-    """
     manual = _get_manual_or_404(manual_id)
     terms = [t.strip() for t in highlight.split(",")] if highlight else []
     try:
@@ -186,3 +203,179 @@ def get_pdf(manual_id: str, user: dict = Depends(auth.get_current_user)):
         raise HTTPException(500, "Arquivo PDF nao encontrado no servidor")
     return FileResponse(path, media_type="application/pdf",
                         headers={"Content-Disposition": "inline"})
+
+
+# --- FLUXO DE SUBMISSÃO DE MANUAIS POR USUÁRIOS ---
+
+@app.post("/submissions")
+
+async def submit_manual(
+    brand: str = Form(...),
+    model: str = Form(...),
+    year: str = Form(...),
+    file: UploadFile = File(...),
+    user: dict = Depends(auth.get_current_user),
+):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(400, "Apenas arquivos PDF são permitidos")
+    
+    unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
+    save_path = db.PENDING_DIR / unique_filename
+    
+    content = await file.read()
+    save_path.write_bytes(content)
+    
+    con = db.get_con()
+    cur = con.execute(
+        """
+        INSERT INTO manual_submissions (user_id, username, brand, model, year, file_path, original_filename, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+        """,
+        (user["id"], user["username"], brand.strip(), model.strip(), year.strip(), str(save_path), file.filename),
+    )
+    submission_id = cur.lastrowid
+    con.commit()
+    con.close()
+
+    return {"ok": True, "submission_id": submission_id, "message": "Manual enviado com sucesso para análise."}
+
+
+@app.get("/submissions/mine")
+
+def my_submissions(user: dict = Depends(auth.get_current_user)):
+    con = db.get_con()
+    rows = con.execute(
+        "SELECT * FROM manual_submissions WHERE user_id = ? ORDER BY submitted_at DESC", (user["id"],)
+    ).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+# --- ROTAS ADMINISTRATIVAS ---
+
+@app.get("/api/admin/submissions")
+
+def list_submissions(status: str | None = None, admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    if status:
+        rows = con.execute(
+            "SELECT * FROM manual_submissions WHERE status = ? ORDER BY submitted_at DESC", (status,)
+        ).fetchall()
+    else:
+        rows = con.execute("SELECT * FROM manual_submissions ORDER BY submitted_at DESC").fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/admin/submissions/{submission_id}/approve")
+
+def approve_submission(submission_id: int, admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    sub = con.execute("SELECT * FROM manual_submissions WHERE id = ?", (submission_id,)).fetchone()
+    if not sub:
+        con.close()
+        raise HTTPException(404, "Submissão não encontrada")
+    if sub["status"] != "pending":
+        con.close()
+        raise HTTPException(400, f"Submissão já possui status '{sub['status']}'")
+
+    file_path = pathlib.Path(sub["file_path"])
+    if not file_path.exists():
+        con.close()
+        raise HTTPException(400, "Arquivo PDF temporário não encontrado no servidor")
+
+    # Indexa o PDF e adiciona ao acervo oficial
+    manual_meta = indexer.index_manual_pdf(
+        pdf_source_path=file_path,
+        brand=sub["brand"],
+        model=sub["model"],
+        year=sub["year"],
+    )
+
+    # Remove o arquivo temporario
+    try:
+        file_path.unlink()
+    except OSError:
+        pass
+
+    now = datetime.now().isoformat()
+    con.execute(
+        "UPDATE manual_submissions SET status = 'approved', reviewed_at = ? WHERE id = ?", (now, submission_id)
+    )
+    con.commit()
+    con.close()
+
+    return {"ok": True, "manual": manual_meta, "message": "Manual aprovado e indexado no acervo com sucesso."}
+
+
+@app.post("/api/admin/submissions/{submission_id}/reject")
+
+def reject_submission(
+    submission_id: int,
+    body: RejectSubmissionRequest,
+    admin: dict = Depends(auth.get_current_admin_user),
+):
+    con = db.get_con()
+    sub = con.execute("SELECT * FROM manual_submissions WHERE id = ?", (submission_id,)).fetchone()
+    if not sub:
+        con.close()
+        raise HTTPException(404, "Submissão não encontrada")
+    
+    file_path = pathlib.Path(sub["file_path"])
+    if file_path.exists():
+        try:
+            file_path.unlink()
+        except OSError:
+            pass
+
+    now = datetime.now().isoformat()
+    con.execute(
+        "UPDATE manual_submissions SET status = 'rejected', rejection_reason = ?, reviewed_at = ? WHERE id = ?",
+        (body.reason, now, submission_id),
+    )
+    con.commit()
+    con.close()
+
+    return {"ok": True, "message": "Submissão rejeitada."}
+
+
+@app.post("/api/admin/manuals")
+
+async def admin_upload_manual(
+    brand: str = Form(...),
+    model: str = Form(...),
+    year: str = Form(...),
+    file: UploadFile = File(...),
+    admin: dict = Depends(auth.get_current_admin_user),
+):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(400, "Apenas arquivos PDF são permitidos")
+
+    temp_path = db.PENDING_DIR / f"admin_upload_{uuid.uuid4().hex}_{file.filename}"
+    content = await file.read()
+    temp_path.write_bytes(content)
+
+    try:
+        manual_meta = indexer.index_manual_pdf(
+            pdf_source_path=temp_path,
+            brand=brand,
+            model=model,
+            year=year,
+        )
+    finally:
+        if temp_path.exists():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+
+    return {"ok": True, "manual": manual_meta, "message": "Manual cadastrado e indexado com sucesso."}
+
+
+@app.delete("/api/admin/manuals/{manual_id}")
+
+def delete_manual(manual_id: str, admin: dict = Depends(auth.get_current_admin_user)):
+    _get_manual_or_404(manual_id)
+    indexer.remove_manual_from_db(manual_id)
+    return {"ok": True, "message": f"Manual '{manual_id}' removido do acervo com sucesso."}
+

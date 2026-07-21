@@ -26,10 +26,17 @@ async function init() {
   const me = await meRes.json();
   el.usernameLabel.textContent = me.username;
 
+  if (me.is_admin) {
+    const adminLink = document.getElementById("admin-panel-link");
+    if (adminLink) adminLink.style.display = "inline-flex";
+  }
+
   el.logoutBtn.addEventListener("click", async () => {
     await api("/auth/logout", { method: "POST" });
     window.location.href = "/login";
   });
+
+  setupSuggestModal();
 
   const manualsRes = await api("/manuals");
   state.manuals = await manualsRes.json();
@@ -37,6 +44,66 @@ async function init() {
 
   el.filterInput.addEventListener("input", renderManualList);
 }
+
+function setupSuggestModal() {
+  const modal = document.getElementById("suggest-modal");
+  const openBtn = document.getElementById("suggest-manual-btn");
+  const closeBtn = document.getElementById("modal-close-btn");
+  const cancelBtn = document.getElementById("modal-cancel-btn");
+  const form = document.getElementById("suggest-form");
+  const statusEl = document.getElementById("suggest-status");
+
+  if (!modal || !openBtn) return;
+
+  const openModal = () => { modal.style.display = "flex"; };
+  const closeModal = () => {
+    modal.style.display = "none";
+    form.reset();
+    statusEl.className = "form-status";
+    statusEl.textContent = "";
+  };
+
+  openBtn.addEventListener("click", openModal);
+  closeBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const file = document.getElementById("suggest-file").files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("brand", document.getElementById("suggest-brand").value.trim());
+    formData.append("model", document.getElementById("suggest-model").value.trim());
+    formData.append("year", document.getElementById("suggest-year").value.trim());
+    formData.append("file", file);
+
+    const submitBtn = document.getElementById("suggest-submit-btn");
+    submitBtn.disabled = true;
+    statusEl.className = "form-status loading";
+    statusEl.textContent = "Enviando arquivo...";
+
+    try {
+      const res = await api("/submissions", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      statusEl.className = "form-status success";
+      statusEl.textContent = data.message || "Manual enviado para análise!";
+      setTimeout(() => closeModal(), 2000);
+    } catch (err) {
+      statusEl.className = "form-status error";
+      statusEl.textContent = "Erro ao enviar: " + err.message;
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
 
 function renderManualList() {
   const filter = el.filterInput.value.trim().toLowerCase();

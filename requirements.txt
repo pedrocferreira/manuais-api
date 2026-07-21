@@ -6,3 +6,5 @@ groq
 ftfy
 pyjwt
 python-dotenv
+python-multipart
+

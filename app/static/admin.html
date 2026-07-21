@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel Admin — Manuais de Serviço</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css?v=5" />
+</head>
+<body class="admin-page">
+<div class="admin-shell">
+  <header class="topbar">
+    <div class="topbar-brand">
+      <a href="/" class="back-link">← Voltar ao Acervo</a>
+      <h1>⚙️ Painel Administrativo</h1>
+    </div>
+    <div class="user-box">
+      <span id="username-label">Admin</span>
+      <button class="logout" id="logout-btn">Sair</button>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <!-- STATS / HEADER CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-title">Submissões Pendentes</span>
+        <span class="stat-value" id="stat-pending">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Manuais no Acervo</span>
+        <span class="stat-value" id="stat-manuals">0</span>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 1: SUBMISSÕES PENDENTES -->
+    <section class="admin-card">
+      <div class="card-header">
+        <h2>📥 Solicitacões de Usuários para Aprovação</h2>
+        <span class="badge" id="pending-badge">0 pendentes</span>
+      </div>
+      <div id="submissions-list" class="table-wrap">
+        <p class="loading-text">Carregando submissões...</p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 2: CADASTRAR NOVO MANUAL DIRETAMENTE -->
+    <section class="admin-card">
+      <div class="card-header">
+        <h2>➕ Cadastrar Novo Manual no Acervo</h2>
+      </div>
+      <form id="upload-form" class="admin-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="brand-input">Marca (ex: Honda, Yamaha)</label>
+            <input type="text" id="brand-input" required placeholder="Ex: Honda" />
+          </div>
+          <div class="form-group">
+            <label for="model-input">Modelo (ex: CG 160 Titan)</label>
+            <input type="text" id="model-input" required placeholder="Ex: CG 160 Titan" />
+          </div>
+          <div class="form-group">
+            <label for="year-input">Ano / Período</label>
+            <input type="text" id="year-input" required placeholder="Ex: 2022" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="file-input">Arquivo PDF do Manual</label>
+          <input type="file" id="file-input" accept=".pdf" required />
+        </div>
+        <button type="submit" class="btn-primary" id="btn-upload">Indexar e Publicar Manual</button>
+        <div id="upload-status" class="form-status"></div>
+      </form>
+    </section>
+
+    <!-- SEÇÃO 3: ACERVO ATUAL DE MANUAIS -->
+    <section class="admin-card">
+      <div class="card-header">
+        <h2>📚 Manuais no Acervo</h2>
+      </div>
+      <div id="catalog-list" class="table-wrap">
+        <p class="loading-text">Carregando acervo...</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/static/admin.js?v=1"></script>
+</body>
+</html>
