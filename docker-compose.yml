@@ -1,0 +1,11 @@
+services:
+  manuais-api:
+    build: .
+    container_name: manuais-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env

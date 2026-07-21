@@ -200,24 +200,40 @@ async function runSearch(manualId) {
 }
 
 function renderAnswerHtml(data) {
-  let html = marked.parse(data.answer || "", { breaks: true });
+  let text = data.answer || "";
+
+  // Remove a linha "PAGINAS: ..." caso tenha escapado do backend
+  text = text.replace(/\n*\*{0,2}\s*PAGINAS\s*:[\d,\s]+\*{0,2}\s*$/i, "").trimEnd();
+
+  // Converte referencias brutas de pagina para links markdown:
+  // Suporta: [p. 119], [p. 119, 294], [p. 119, p. 294, p. 295],
+  //          [pág. 44], [pp. 44, 119], [p 119], etc.
+  // Estrategia: qualquer colchete que comece com prefixo de pagina E contenha numeros.
+  text = text.replace(/\[\s*(?:p[aá]g(?:inas?)?|pp?)[\.\s]*([\d][\d\s,\.p]*?)\s*\](?!\()/gi, (match) => {
+    const pages = match.match(/\d+/g) || [];
+    if (pages.length === 0) return match;
+    return pages.map(p => `[pág. ${p}](/manuals/${data.manual_id}/pdf#page=${p})`).join(" ");
+  });
+
+  let html = marked.parse(text, { breaks: true });
   html = sanitizeHtml(html);
 
-  // [p. 44] ou [p. 44, 119] viram botoes que abrem a imagem da pagina
-  const refMap = {};
-  for (const r of data.references || []) refMap[r.page] = r.image_url;
-  // aceita [p. 44], [p. 44, 119], [p. 44, p. 119], [páginas 44 e 119]...
-  html = html.replace(/\[\s*p(?:áginas?|aginas?|p?\.)?[\s.]*([\d\s,e.p]+?)\s*\]/gi, (match, nums) => {
-    const pages = nums.match(/\d+/g) || [];
-    if (pages.length === 0) return match;
-    return pages
-      .map((p) => {
-        const img = refMap[p] || `/manuals/${data.manual_id}/pages/${p}/image`;
-        return `<button type="button" class="cite" data-image="${img}" data-page="${p}" title="Ver página ${p} do manual">p. ${p}</button>`;
-      })
-      .join(" ");
+  // Destaca visualmente o primeiro paragrafo (resposta direta)
+  const t = document.createElement("template");
+  t.innerHTML = html;
+  const firstP = t.content.querySelector("p");
+  if (firstP) firstP.classList.add("answer-lead");
+
+  // Garante que links do PDF abram em nova aba com estilo de badge
+  t.content.querySelectorAll("a").forEach(a => {
+    if (a.getAttribute("href")?.includes("/pdf#page=")) {
+      a.classList.add("pdf-link");
+    }
+    a.setAttribute("target", "_blank");
+    a.setAttribute("rel", "noopener");
   });
-  return `<div class="answer-box md">${html}</div>`;
+
+  return `<div class="answer-box md">${t.innerHTML}</div>`;
 }
 
 // Remove qualquer HTML perigoso que venha no markdown (a resposta vem de um LLM)

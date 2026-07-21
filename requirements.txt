@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 pymupdf
 google-genai
+groq
 ftfy
 pyjwt
 python-dotenv

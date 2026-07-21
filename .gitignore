@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 data/.secret_key
 data/index.db
+data/page_cache/
+data/page_cache/**  
