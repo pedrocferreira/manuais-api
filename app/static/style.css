@@ -149,9 +149,54 @@ button.primary:disabled {
   border: 1px solid rgba(242, 99, 75, 0.3);
   color: #ffb3a3;
   font-size: 0.9rem;
-  display: none;
-  animation: fadeIn 0.3s ease;
 }
+
+/* ---------- Auth Tabs & Hints ---------- */
+.auth-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  color: var(--text-dim);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-hint {
+  margin-top: 28px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255, 122, 26, 0.08);
+  border: 1px solid rgba(255, 122, 26, 0.2);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.admin-hint code {
+  color: var(--accent);
+  background: rgba(255, 122, 26, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 
 /* ---------- app shell ---------- */
 .app-shell {

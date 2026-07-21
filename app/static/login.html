@@ -3,33 +3,77 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Login — Manuais de Serviço</title>
+<title>Acesso — Manuais de Serviço</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css?v=4" />
+<link rel="stylesheet" href="/static/style.css?v=6" />
 </head>
 <body>
 <div class="login-wrap">
   <div class="login-card">
-    <h1>Manuais de Serviço</h1>
-    <p class="subtitle">Entre com seu usuário para consultar os manuais.</p>
+    <h1>🔧 Manuais de Serviço</h1>
+    <p class="subtitle">Consulte o acervo completo de manuais técnicos.</p>
+    
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login">Entrar</button>
+      <button class="auth-tab" id="tab-register">Cadastrar-se</button>
+    </div>
+
+    <!-- FORMULARIO DE LOGIN -->
     <form id="login-form">
       <label for="username">Usuário</label>
-      <input type="text" id="username" autocomplete="username" required autofocus />
+      <input type="text" id="username" autocomplete="username" required autofocus placeholder="Digite seu usuário..." />
       <label for="password">Senha</label>
-      <input type="password" id="password" autocomplete="current-password" required />
-      <div class="error-box" id="error-box"></div>
-      <button type="submit" class="primary" id="submit-btn">Entrar</button>
+      <input type="password" id="password" autocomplete="current-password" required placeholder="Digite sua senha..." />
+      <div class="error-box" id="error-box" style="display:none;"></div>
+      <button type="submit" class="primary" id="submit-btn">Entrar no Sistema</button>
     </form>
+
+    <!-- FORMULARIO DE CADASTRO -->
+    <form id="register-form" style="display:none;">
+      <label for="reg-username">Escolha um Usuário</label>
+      <input type="text" id="reg-username" autocomplete="username" placeholder="Mínimo 3 caracteres..." required />
+      <label for="reg-password">Crie uma Senha</label>
+      <input type="password" id="reg-password" autocomplete="new-password" placeholder="Mínimo 4 caracteres..." required />
+      <label for="reg-confirm">Confirme a Senha</label>
+      <input type="password" id="reg-confirm" autocomplete="new-password" placeholder="Repita a senha..." required />
+      <div class="error-box" id="reg-error-box" style="display:none;"></div>
+      <button type="submit" class="primary" id="reg-submit-btn">Criar Minha Conta</button>
+    </form>
+
+    <div class="admin-hint">
+      💡 <strong>Conta de Administrador Padrão:</strong><br>
+      Usuário: <code>admin</code> | Senha: <code>admin</code>
+    </div>
   </div>
 </div>
+
 <script>
-const form = document.getElementById("login-form");
+const tabLogin = document.getElementById("tab-login");
+const tabRegister = document.getElementById("tab-register");
+const loginForm = document.getElementById("login-form");
+const registerForm = document.getElementById("register-form");
+
+tabLogin.addEventListener("click", () => {
+  tabLogin.classList.add("active");
+  tabRegister.classList.remove("active");
+  loginForm.style.display = "block";
+  registerForm.style.display = "none";
+});
+
+tabRegister.addEventListener("click", () => {
+  tabRegister.classList.add("active");
+  tabLogin.classList.remove("active");
+  loginForm.style.display = "none";
+  registerForm.style.display = "block";
+});
+
+// SUBMIT LOGIN
 const errorBox = document.getElementById("error-box");
 const submitBtn = document.getElementById("submit-btn");
 
-form.addEventListener("submit", async (e) => {
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorBox.style.display = "none";
   submitBtn.disabled = true;
@@ -49,15 +93,67 @@ form.addEventListener("submit", async (e) => {
       errorBox.textContent = data.detail || "Usuário ou senha inválidos.";
       errorBox.style.display = "block";
       submitBtn.disabled = false;
-      submitBtn.textContent = "Entrar";
+      submitBtn.textContent = "Entrar no Sistema";
       return;
     }
-    window.location.href = "/";
+    const data = await res.json();
+    if (data.is_admin) {
+      window.location.href = "/admin";
+    } else {
+      window.location.href = "/";
+    }
   } catch (err) {
     errorBox.textContent = "Não foi possível conectar ao servidor.";
     errorBox.style.display = "block";
     submitBtn.disabled = false;
-    submitBtn.textContent = "Entrar";
+    submitBtn.textContent = "Entrar no Sistema";
+  }
+});
+
+// SUBMIT CADASTRO
+const regErrorBox = document.getElementById("reg-error-box");
+const regSubmitBtn = document.getElementById("reg-submit-btn");
+
+registerForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  regErrorBox.style.display = "none";
+  
+  const pass = document.getElementById("reg-password").value;
+  const confirm = document.getElementById("reg-confirm").value;
+
+  if (pass !== confirm) {
+    regErrorBox.textContent = "As senhas não conferem.";
+    regErrorBox.style.display = "block";
+    return;
+  }
+
+  regSubmitBtn.disabled = true;
+  regSubmitBtn.textContent = "Criando conta...";
+
+  try {
+    const res = await fetch("/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        username: document.getElementById("reg-username").value.trim(),
+        password: pass,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      regErrorBox.textContent = data.detail || "Erro ao criar conta.";
+      regErrorBox.style.display = "block";
+      regSubmitBtn.disabled = false;
+      regSubmitBtn.textContent = "Criar Minha Conta";
+      return;
+    }
+    window.location.href = "/";
+  } catch (err) {
+    regErrorBox.textContent = "Não foi possível conectar ao servidor.";
+    regErrorBox.style.display = "block";
+    regSubmitBtn.disabled = false;
+    regSubmitBtn.textContent = "Criar Minha Conta";
   }
 });
 </script>

@@ -40,6 +40,24 @@ app.add_middleware(
 
 db.ensure_users_table()
 
+# Garante a existencia do usuario admin padrao (admin / admin)
+con = db.get_con()
+_admin_row = con.execute("SELECT id FROM users WHERE username = 'admin'").fetchone()
+_admin_hash = auth.hash_password("admin")
+if not _admin_row:
+    con.execute(
+        "INSERT INTO users (username, password_hash, is_admin) VALUES ('admin', ?, 1)",
+        (_admin_hash,),
+    )
+else:
+    con.execute(
+        "UPDATE users SET password_hash = ?, is_admin = 1 WHERE username = 'admin'",
+        (_admin_hash,),
+    )
+con.commit()
+con.close()
+
+
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -48,6 +66,11 @@ class AskRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class RegisterRequest(BaseModel):
     username: str
     password: str
 
@@ -71,8 +94,49 @@ def admin_page(request: Request):
     user = auth.get_user(con, username)
     con.close()
     if not user or not user.get("is_admin"):
-        raise HTTPException(403, "Acesso restrito a administradores")
+        return Response(
+            content="""<!doctype html><html><head><title>Acesso Restrito</title>
+            <style>body{background:#0b0d14;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+            .card{background:#1a1e29;padding:40px;border-radius:16px;text-align:center;}
+            a{color:#ff7a1a;text-decoration:none;font-weight:bold;}</style></head>
+            <body><div class="card"><h1>⛔ Acesso Restrito</h1><p>Esta área é exclusiva para administradores.</p>
+            <p><a href="/">← Voltar para o Sistema Principal</a></p></div></body></html>""",
+            status_code=403,
+            media_type="text/html",
+        )
     return FileResponse(STATIC_DIR / "admin.html")
+
+
+@app.post("/auth/register")
+def register(body: RegisterRequest):
+    username = body.username.strip().lower()
+    password = body.password
+    if not username or len(username) < 3:
+        raise HTTPException(400, "O nome de usuário deve ter pelo menos 3 caracteres")
+    if len(password) < 4:
+        raise HTTPException(400, "A senha deve ter pelo menos 4 caracteres")
+
+    con = db.get_con()
+    existing = con.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    if existing:
+        con.close()
+        raise HTTPException(400, "Este nome de usuário já está cadastrado")
+
+    password_hash = auth.hash_password(password)
+    cur = con.execute(
+        "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 0)",
+        (username, password_hash),
+    )
+    con.commit()
+    con.close()
+
+    token = auth.create_token(username)
+    response = JSONResponse({"ok": True, "username": username, "is_admin": False})
+    response.set_cookie(
+        auth.COOKIE_NAME, token, httponly=True, samesite="lax", max_age=auth.TOKEN_TTL_SECONDS,
+    )
+    return response
+
 
 
 @app.get("/")
