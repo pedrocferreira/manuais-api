@@ -70,8 +70,12 @@ def _decode_token(token: str) -> str | None:
 
 
 def get_user(con: sqlite3.Connection, username: str) -> dict | None:
-    row = con.execute("SELECT id, username, is_admin FROM users WHERE username = ?", (username,)).fetchone()
+    row = con.execute(
+        "SELECT id, username, is_admin, plan_id, plan_manual_id FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
     return dict(row) if row else None
+
 
 
 def get_current_user(request: Request) -> dict:

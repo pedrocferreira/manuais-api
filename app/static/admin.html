@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css?v=5" />
+<link rel="stylesheet" href="/static/style.css?v=9" />
 </head>
 <body class="admin-page">
 <div class="admin-shell">
@@ -33,7 +33,37 @@
         <span class="stat-title">Manuais no Acervo</span>
         <span class="stat-value" id="stat-manuals">0</span>
       </div>
+      <div class="stat-card">
+        <span class="stat-title">Usuários Cadastrados</span>
+        <span class="stat-value" id="stat-users">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Planos Ativos</span>
+        <span class="stat-value" id="stat-plans">0</span>
+      </div>
     </div>
+
+    <!-- SEÇÃO: PLANOS DE ASSINATURA -->
+    <section class="admin-card">
+      <div class="card-header">
+        <h2>💳 Planos de Assinatura</h2>
+        <button class="btn-primary" id="btn-new-plan" onclick="openNewPlanModal()">+ Novo Plano</button>
+      </div>
+      <div class="plans-grid" id="plans-grid">
+        <p class="loading-text">Carregando planos...</p>
+      </div>
+    </section>
+
+    <!-- SEÇÃO: USUÁRIOS E PLANOS -->
+    <section class="admin-card">
+      <div class="card-header">
+        <h2>👥 Usuários</h2>
+        <span class="badge" id="users-badge">0 usuários</span>
+      </div>
+      <div id="users-list" class="table-wrap">
+        <p class="loading-text">Carregando usuários...</p>
+      </div>
+    </section>
 
     <!-- SEÇÃO 1: SUBMISSÕES PENDENTES -->
     <section class="admin-card">
@@ -87,6 +117,58 @@
   </main>
 </div>
 
-<script src="/static/admin.js?v=1"></script>
+<!-- Modal para novo/editar plano -->
+<div id="plan-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="plan-modal-title">💳 Novo Plano</h2>
+      <button class="modal-close" onclick="closePlanModal()">&#x2715;</button>
+    </div>
+    <form id="plan-form">
+      <input type="hidden" id="plan-form-id" />
+      <div class="form-group">
+        <label for="plan-name">Nome do Plano</label>
+        <input type="text" id="plan-name" required placeholder="Ex: Proprietário" />
+      </div>
+      <div class="form-group">
+        <label for="plan-slug">Identificador (slug)</label>
+        <input type="text" id="plan-slug" required placeholder="Ex: owner" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="plan-price">Preço (R$)</label>
+          <input type="number" id="plan-price" step="0.01" min="0" required placeholder="15.90" />
+        </div>
+        <div class="form-group">
+          <label for="plan-max">Máx. Manuais (vazio = ilimitado)</label>
+          <input type="number" id="plan-max" min="1" placeholder="Ex: 1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="plan-desc">Descrição</label>
+        <input type="text" id="plan-desc" placeholder="Ex: Acesso a 1 modelo específico" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closePlanModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" id="plan-submit-btn">Salvar Plano</button>
+      </div>
+      <div id="plan-status" class="form-status"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para atribuir plano a usuário -->
+<div id="user-plan-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>👤 Atribuir Plano</h2>
+      <button class="modal-close" onclick="closeUserPlanModal()">&#x2715;</button>
+    </div>
+    <div id="user-plan-modal-body"></div>
+  </div>
+</div>
+
+<script src="/static/admin.js?v=9"></script>
 </body>
 </html>
+

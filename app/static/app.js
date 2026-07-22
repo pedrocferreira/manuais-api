@@ -2,6 +2,7 @@ const state = {
   manuals: [],
   activeManual: null,
   activeTab: "ask", // "ask" | "search"
+  currentUser: null,
 };
 
 const el = {
@@ -10,6 +11,11 @@ const el = {
   content: document.getElementById("content"),
   usernameLabel: document.getElementById("username-label"),
   logoutBtn: document.getElementById("logout-btn"),
+  sidebar: document.getElementById("sidebar"),
+  sidebarOverlay: document.getElementById("sidebar-overlay"),
+  hamburgerBtn: document.getElementById("hamburger-btn"),
+  sidebarCloseBtn: document.getElementById("sidebar-close-btn"),
+  bottomNav: document.getElementById("bottom-nav"),
 };
 
 async function api(path, options = {}) {
@@ -24,6 +30,7 @@ async function api(path, options = {}) {
 async function init() {
   const meRes = await api("/auth/me");
   const me = await meRes.json();
+  state.currentUser = me;
   el.usernameLabel.textContent = me.username;
 
   if (me.is_admin) {
@@ -37,12 +44,139 @@ async function init() {
   });
 
   setupSuggestModal();
+  setupMobileNav();
 
   const manualsRes = await api("/manuals");
   state.manuals = await manualsRes.json();
   renderManualList();
 
   el.filterInput.addEventListener("input", renderManualList);
+
+  // Plano Proprietário sem moto selecionada → mostrar modal
+  if (!me.is_admin && me.plan && me.plan.max_manuals === 1 && !me.plan_manual_id) {
+    showSelectManualModal();
+  }
+
+  // Banner de plano ativo
+  if (!me.is_admin && me.plan) {
+    showPlanBanner(me);
+  }
+}
+
+function showPlanBanner(me) {
+  const content = el.content;
+  const bannerHtml = `
+    <div class="plan-banner" id="plan-banner">
+      📋 Plano <strong>${escapeHtml(me.plan.name)}</strong>
+      ${me.plan.max_manuals === 1 && me.plan_manual_id ? ' — acesso à moto selecionada' : ''}
+      ${me.plan.max_manuals !== 1 ? ' — acesso completo ao acervo' : ''}
+    </div>
+  `;
+  // Inserir banner antes do conteúdo
+  const existing = document.getElementById("plan-banner");
+  if (!existing) {
+    content.insertAdjacentHTML("afterbegin", bannerHtml);
+  }
+}
+
+function showSelectManualModal() {
+  const modal = document.getElementById("select-manual-modal");
+  const grid = document.getElementById("select-manual-grid");
+  if (!modal || !grid) return;
+
+  // Buscar todos os manuais disponíveis
+  api("/manuals").then(async (res) => {
+    // Aqui precisa de um endpoint sem filtro de plano - temporariamente usa o mesmo
+    const all = state.manuals.length > 0 ? state.manuals : await res.json();
+    grid.innerHTML = all.map(m => `
+      <button class="select-manual-item" onclick="selectManualForPlan('${m.id}')"
+              data-id="${m.id}">
+        <span class="moto-icon">🏍️</span>
+        <div class="moto-info">
+          <strong>${escapeHtml(m.brand)} ${escapeHtml(m.model)}</strong>
+          <span>${escapeHtml(m.year)}</span>
+        </div>
+      </button>
+    `).join("");
+    modal.style.display = "flex";
+  }).catch(() => {});
+}
+
+window.selectManualForPlan = async function(manualId) {
+  try {
+    const res = await api("/auth/select-manual", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ manual_id: manualId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById("select-manual-modal").style.display = "none";
+      // Recarregar manuais com filtro do plano
+      const manualsRes = await api("/manuals");
+      state.manuals = await manualsRes.json();
+      renderManualList();
+      // Atualizar user
+      const meRes = await api("/auth/me");
+      state.currentUser = await meRes.json();
+    }
+  } catch (err) {}
+};
+
+function setupMobileNav() {
+  // Hamburger open
+  if (el.hamburgerBtn) {
+    el.hamburgerBtn.addEventListener("click", openSidebarMobile);
+  }
+  // Overlay close
+  if (el.sidebarOverlay) {
+    el.sidebarOverlay.addEventListener("click", closeSidebarMobile);
+  }
+  // X button close
+  if (el.sidebarCloseBtn) {
+    el.sidebarCloseBtn.addEventListener("click", closeSidebarMobile);
+  }
+  // Bottom nav tabs
+  if (el.bottomNav) {
+    el.bottomNav.querySelectorAll(".bottom-nav-btn[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!state.activeManual) return;
+        state.activeTab = btn.dataset.tab;
+        renderContent();
+        updateBottomNav(btn.dataset.tab);
+      });
+    });
+  }
+  // Detectar mobile e mostrar bottom nav
+  checkMobileLayout();
+  window.addEventListener("resize", checkMobileLayout);
+}
+
+function checkMobileLayout() {
+  const isMobile = window.innerWidth <= 768;
+  if (el.bottomNav) {
+    el.bottomNav.style.display = isMobile ? "flex" : "none";
+  }
+}
+
+window.openSidebarMobile = function() {
+  if (el.sidebar) el.sidebar.classList.add("open");
+  if (el.sidebarOverlay) el.sidebarOverlay.classList.add("active");
+  document.body.style.overflow = "hidden";
+};
+
+function closeSidebarMobile() {
+  if (el.sidebar) el.sidebar.classList.remove("open");
+  if (el.sidebarOverlay) el.sidebarOverlay.classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+function updateBottomNav(tab) {
+  if (!el.bottomNav) return;
+  el.bottomNav.querySelectorAll(".bottom-nav-btn").forEach(btn => {
+    const isActive = btn.dataset.tab === tab;
+    btn.classList.toggle("active", isActive);
+  });
 }
 
 function setupSuggestModal() {
@@ -148,6 +282,8 @@ async function selectManual(id) {
   state.activeTab = "ask";
   renderManualList();
   renderContent();
+  updateBottomNav("ask");
+  closeSidebarMobile(); // fecha drawer no mobile
 }
 
 function renderContent() {
@@ -184,17 +320,56 @@ function renderContent() {
   const tabBody = document.getElementById("tab-body");
 
   if (state.activeTab === "ask") {
+    const voiceSupported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    const micTitle = voiceSupported ? 'Perguntar por voz' : 'Voz não suportada neste navegador';
     tabBody.innerHTML = `
-      <div class="ask-row">
-        <textarea id="ask-input" placeholder="Ex.: qual o torque do parafuso de dreno de óleo?" ${disabled ? "disabled" : ""}></textarea>
-        <button class="primary" id="ask-btn" ${disabled ? "disabled" : ""}>Perguntar</button>
+      <div class="ask-section">
+        <div class="ask-input-bar" id="ask-input-bar">
+          <textarea
+            id="ask-input"
+            rows="1"
+            placeholder="Escreva a sua pergunta ou use o microfone…"
+            ${disabled ? "disabled" : ""}
+          ></textarea>
+          <div class="ask-bar-actions">
+            <button class="btn-mic" id="mic-btn"
+              title="${micTitle}"
+              ${(!voiceSupported || disabled) ? 'disabled' : ''}
+              aria-label="Gravar pergunta por voz">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+              </svg>
+            </button>
+            <button class="btn-send" id="ask-btn"
+              ${disabled ? "disabled" : ""}
+              aria-label="Enviar pergunta">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="voice-status" class="voice-status-bar hidden" role="status" aria-live="polite"></div>
+        <div id="ask-result"></div>
       </div>
-      <div id="ask-result"></div>
     `;
     document.getElementById("ask-btn").addEventListener("click", () => runAsk(m.id));
-    document.getElementById("ask-input").addEventListener("keydown", (e) => {
+    const askTa = document.getElementById("ask-input");
+    // Auto-grow textarea
+    function autoGrow() {
+      askTa.style.height = "auto";
+      askTa.style.height = Math.min(askTa.scrollHeight, 160) + "px";
+    }
+    askTa.addEventListener("input", autoGrow);
+    askTa.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runAsk(m.id);
     });
+    if (voiceSupported && !disabled) {
+      setupVoiceInput(m.id);
+    }
   } else {
     tabBody.innerHTML = `
       <div class="ask-row">
@@ -382,4 +557,133 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// ── Voice Input ──────────────────────────────────────────────────────────────
+function setupVoiceInput(manualId) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
+
+  const micBtn     = document.getElementById("mic-btn");
+  const askInput   = document.getElementById("ask-input");
+  const voiceSt    = document.getElementById("voice-status");
+  if (!micBtn || !askInput) return;
+
+  let recognition = null;
+  let isRecording = false;
+
+  function setStatus(msg, dot = false) {
+    if (!voiceSt) return;
+    if (!msg) {
+      voiceSt.classList.add("hidden");
+      voiceSt.innerHTML = "";
+      return;
+    }
+    voiceSt.classList.remove("hidden");
+    voiceSt.innerHTML = dot
+      ? `<span class="voice-dot"></span>${msg}`
+      : msg;
+  }
+
+  function startRecording() {
+    if (isRecording) { stopRecording(); return; }
+
+    if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+      setStatus("❌ O microfone requer conexão segura (HTTPS) para funcionar no celular.");
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      isRecording = true;
+      micBtn.classList.add("recording");
+      const bar = document.getElementById("ask-input-bar");
+      if (bar) bar.classList.add("is-listening");
+      micBtn.title = "Parar gravação — clique para parar";
+      askInput.placeholder = "🎤 Ouvindo… fale agora";
+      setStatus("A ouvir…", true);
+    };
+
+    recognition.onresult = (e) => {
+      let interim = "";
+      let final   = "";
+      for (const result of e.results) {
+        if (result.isFinal) final   += result[0].transcript;
+        else               interim += result[0].transcript;
+      }
+      if (final) {
+        askInput.value = final.trim();
+        setStatus("✅ Pronto! Revise e clique em Perguntar.");
+      } else if (interim) {
+        setStatus(`💬 "${interim}"`, true);
+      }
+    };
+
+    recognition.onerror = (e) => {
+      let msg = `❌ Erro: ${e.error}`;
+      if (e.error === "not-allowed") {
+        msg = window.isSecureContext 
+            ? "❌ Permissão de microfone negada."
+            : "❌ Microfone bloqueado (HTTPS é obrigatório no celular).";
+      } else if (e.error === "no-speech") {
+        msg = "⚠️ Nenhuma fala detectada. Tente novamente.";
+      } else if (e.error === "audio-capture") {
+        msg = "❌ Microfone não encontrado.";
+      } else if (e.error === "network") {
+        msg = "❌ Erro de rede no reconhecimento de voz.";
+      }
+      setStatus(msg);
+      stopRecording(false);
+    };
+
+    recognition.onend = () => {
+      stopRecording(false);
+    };
+
+    try {
+      recognition.start();
+    } catch (err) {
+      if (!window.isSecureContext) {
+        setStatus("❌ O microfone requer conexão segura (HTTPS) no celular.");
+      } else {
+        setStatus("❌ Não foi possível iniciar o microfone.");
+      }
+    }
+  }
+
+  function stopRecording(abort = true) {
+    isRecording = false;
+    micBtn.classList.remove("recording");
+    const bar = document.getElementById("ask-input-bar");
+    if (bar) bar.classList.remove("is-listening");
+    micBtn.title = "Perguntar por voz";
+    askInput.placeholder = "Escreva a sua pergunta ou use o microfone…";
+    if (abort && recognition) {
+      try { recognition.stop(); } catch (_) {}
+    }
+    recognition = null;
+    // Limpar status após 4 s se não houver texto útil
+    setTimeout(() => {
+      const st = document.getElementById("voice-status");
+      if (st && !st.classList.contains("hidden") && !st.textContent.includes("Pronto")) {
+        setStatus("");
+      }
+    }, 4000);
+  }
+
+  micBtn.addEventListener("click", () => startRecording());
+
+  // Atalho de teclado: Alt+M dispara o microfone quando o foco está na área de perguntas
+  askInput.addEventListener("keydown", (e) => {
+    if (e.altKey && e.key.toLowerCase() === "m") {
+      e.preventDefault();
+      startRecording();
+    }
+  });
+}
+
 init();
+

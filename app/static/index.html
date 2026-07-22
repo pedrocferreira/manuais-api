@@ -7,21 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css?v=5" />
+<link rel="stylesheet" href="/static/style.css?v=9" />
 </head>
 <body>
 <div class="app-shell">
   <header class="topbar">
-    <h1>🔧 Manuais de Serviço — Motos</h1>
+    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+      <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir lista de motos">☰</button>
+      <h1>🔧 Manuais de Serviço</h1>
+    </div>
     <div class="user-box">
-      <button class="btn-secondary" id="suggest-manual-btn">📤 Sugerir Manual</button>
-      <a href="/admin" class="btn-admin" id="admin-panel-link" style="display:none;">⚙️ Painel Admin</a>
+      <button class="btn-secondary" id="suggest-manual-btn">📤 <span class="btn-text">Sugerir Manual</span></button>
+      <a href="/admin" class="btn-admin" id="admin-panel-link" style="display:none;">⚙️ <span class="btn-text">Admin</span></a>
       <span id="username-label"></span>
       <button class="logout" id="logout-btn">Sair</button>
     </div>
   </header>
 
-  <aside class="sidebar">
+  <!-- Overlay para fechar sidebar no mobile -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Fechar">✕</button>
     <input type="search" id="filter-input" placeholder="Filtrar por marca ou modelo..." />
     <div id="manual-list"></div>
   </aside>
@@ -30,6 +37,26 @@
     <div class="empty-state">Selecione uma moto na lista ao lado.</div>
   </main>
 </div>
+
+<!-- Bottom nav (mobile) -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none;">
+  <button class="bottom-nav-btn active" id="bn-motos" onclick="openSidebarMobile()">
+    <span class="bn-icon">🏍️</span>
+    Motos
+  </button>
+  <button class="bottom-nav-btn" id="bn-ask" data-tab="ask">
+    <span class="bn-icon">💬</span>
+    Perguntar
+  </button>
+  <button class="bottom-nav-btn" id="bn-search" data-tab="search">
+    <span class="bn-icon">🔍</span>
+    Buscar
+  </button>
+  <button class="bottom-nav-btn" id="bn-suggest" onclick="document.getElementById('suggest-manual-btn').click()">
+    <span class="bn-icon">📤</span>
+    Sugerir
+  </button>
+</nav>
 
 <!-- Modal para envio de sugestão de manual -->
 <div id="suggest-modal" class="modal-overlay" style="display:none;">
@@ -70,8 +97,18 @@
   </div>
 </div>
 
+<!-- Modal seleção de moto (plano Proprietário) -->
+<div id="select-manual-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card select-manual-modal">
+    <div class="modal-header">
+      <h2>🏍️ Escolha sua Moto</h2>
+    </div>
+    <p class="modal-desc">Seu plano <strong>Proprietário</strong> dá acesso a 1 modelo. Escolha abaixo qual manual você deseja acessar.</p>
+    <div class="select-manual-grid" id="select-manual-grid"></div>
+  </div>
+</div>
+
 <script src="/static/marked.min.js"></script>
-<script src="/static/app.js?v=4"></script>
+<script src="/static/app.js?v=9"></script>
 </body>
 </html>
-

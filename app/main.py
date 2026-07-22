@@ -79,6 +79,23 @@ class RejectSubmissionRequest(BaseModel):
     reason: str | None = None
 
 
+class PlanRequest(BaseModel):
+    name: str
+    slug: str
+    price: float
+    description: str | None = None
+    max_manuals: int | None = None
+
+
+class SetPlanRequest(BaseModel):
+    plan_id: int | None = None
+    plan_manual_id: str | None = None
+
+
+class SelectManualRequest(BaseModel):
+    manual_id: str
+
+
 @app.get("/login")
 def login_page():
     return FileResponse(STATIC_DIR / "login.html")
@@ -171,10 +188,6 @@ def logout():
     return response
 
 
-@app.get("/auth/me")
-def me(user: dict = Depends(auth.get_current_user)):
-    return user
-
 
 def _get_manual_or_404(manual_id: str) -> dict:
     con = db.get_con()
@@ -188,7 +201,13 @@ def _get_manual_or_404(manual_id: str) -> dict:
 @app.get("/manuals")
 def list_manuals(brand: str | None = None, user: dict = Depends(auth.get_current_user)):
     con = db.get_con()
-    if brand:
+    # Filtro por plano: se usuario tem plano_manual_id definido, retorna apenas aquele manual
+    if not user.get("is_admin") and user.get("plan_manual_id"):
+        rows = con.execute(
+            "SELECT * FROM manuals WHERE id = ? ORDER BY brand, model",
+            (user["plan_manual_id"],),
+        ).fetchall()
+    elif brand:
         rows = con.execute(
             "SELECT * FROM manuals WHERE lower(brand) = lower(?) ORDER BY brand, model", (brand,)
         ).fetchall()
@@ -442,4 +461,159 @@ def delete_manual(manual_id: str, admin: dict = Depends(auth.get_current_admin_u
     _get_manual_or_404(manual_id)
     indexer.remove_manual_from_db(manual_id)
     return {"ok": True, "message": f"Manual '{manual_id}' removido do acervo com sucesso."}
+
+
+# --- ROTAS DE PLANOS ---
+
+@app.get("/api/plans")
+def list_plans_public():
+    """Lista planos disponíveis (público, para exibir na tela de cadastro)."""
+    con = db.get_con()
+    rows = con.execute("SELECT * FROM plans ORDER BY price").fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/admin/plans")
+def list_plans(admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    rows = con.execute("SELECT * FROM plans ORDER BY price").fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/admin/plans")
+def create_plan(body: PlanRequest, admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    try:
+        cur = con.execute(
+            "INSERT INTO plans (name, slug, price, description, max_manuals) VALUES (?, ?, ?, ?, ?)",
+            (body.name.strip(), body.slug.strip().lower(), body.price, body.description, body.max_manuals),
+        )
+        plan_id = cur.lastrowid
+        con.commit()
+        plan = dict(con.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone())
+        con.close()
+        return {"ok": True, "plan": plan}
+    except Exception as e:
+        con.close()
+        raise HTTPException(400, f"Erro ao criar plano: {e}")
+
+
+@app.put("/api/admin/plans/{plan_id}")
+def update_plan(plan_id: int, body: PlanRequest, admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    row = con.execute("SELECT id FROM plans WHERE id = ?", (plan_id,)).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, "Plano não encontrado")
+    con.execute(
+        "UPDATE plans SET name=?, slug=?, price=?, description=?, max_manuals=? WHERE id=?",
+        (body.name.strip(), body.slug.strip().lower(), body.price, body.description, body.max_manuals, plan_id),
+    )
+    con.commit()
+    plan = dict(con.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone())
+    con.close()
+    return {"ok": True, "plan": plan}
+
+
+@app.delete("/api/admin/plans/{plan_id}")
+def delete_plan(plan_id: int, admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    row = con.execute("SELECT id FROM plans WHERE id = ?", (plan_id,)).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, "Plano não encontrado")
+    con.execute("DELETE FROM plans WHERE id = ?", (plan_id,))
+    con.commit()
+    con.close()
+    return {"ok": True, "message": "Plano removido."}
+
+
+# --- ROTAS DE GESTÃO DE USUÁRIOS ---
+
+@app.get("/api/admin/users")
+def list_users(admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    rows = con.execute(
+        """
+        SELECT u.id, u.username, u.is_admin, u.plan_id, u.plan_manual_id, u.created_at,
+               p.name as plan_name, p.slug as plan_slug, p.price as plan_price,
+               m.brand as manual_brand, m.model as manual_model
+        FROM users u
+        LEFT JOIN plans p ON u.plan_id = p.id
+        LEFT JOIN manuals m ON u.plan_manual_id = m.id
+        ORDER BY u.created_at DESC
+        """
+    ).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/admin/users/{user_id}/set-plan")
+def set_user_plan(user_id: int, body: SetPlanRequest, admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+    row = con.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, "Usuário não encontrado")
+
+    # Se plan_id é None ou plano não é 'owner', limpa plan_manual_id
+    plan_manual_id = body.plan_manual_id
+    if body.plan_id:
+        plan = con.execute("SELECT * FROM plans WHERE id = ?", (body.plan_id,)).fetchone()
+        if plan and plan["max_manuals"] != 1:
+            plan_manual_id = None  # plano sem restrição de moto
+    else:
+        plan_manual_id = None
+
+    con.execute(
+        "UPDATE users SET plan_id = ?, plan_manual_id = ? WHERE id = ?",
+        (body.plan_id, plan_manual_id, user_id),
+    )
+    con.commit()
+    con.close()
+    return {"ok": True, "message": "Plano atualizado."}
+
+
+# --- ROTA PARA USUARIO PROPRIETARIO SELECIONAR SUA MOTO ---
+
+@app.post("/auth/select-manual")
+def select_manual_for_plan(body: SelectManualRequest, user: dict = Depends(auth.get_current_user)):
+    """Permite ao usuário Proprietário escolher qual manual acessar (uma única vez ou a qualquer momento)."""
+    if user.get("is_admin"):
+        raise HTTPException(400, "Admin não precisa selecionar manual")
+
+    con = db.get_con()
+    # Verificar se o plano do usuário é 'owner'
+    plan_row = None
+    if user.get("plan_id"):
+        plan_row = con.execute("SELECT * FROM plans WHERE id = ?", (user["plan_id"],)).fetchone()
+
+    if not plan_row or plan_row["max_manuals"] != 1:
+        con.close()
+        raise HTTPException(403, "Esta funcionalidade é apenas para o plano Proprietário")
+
+    # Verificar se o manual existe
+    manual = con.execute("SELECT id FROM manuals WHERE id = ?", (body.manual_id,)).fetchone()
+    if not manual:
+        con.close()
+        raise HTTPException(404, "Manual não encontrado")
+
+    con.execute("UPDATE users SET plan_manual_id = ? WHERE id = ?", (body.manual_id, user["id"]))
+    con.commit()
+    con.close()
+    return {"ok": True, "message": "Manual selecionado com sucesso."}
+
+
+@app.get("/auth/me")
+def me(user: dict = Depends(auth.get_current_user)):
+    con = db.get_con()
+    plan = None
+    if user.get("plan_id"):
+        plan_row = con.execute("SELECT * FROM plans WHERE id = ?", (user["plan_id"],)).fetchone()
+        if plan_row:
+            plan = dict(plan_row)
+    con.close()
+    return {**user, "plan": plan}
 
