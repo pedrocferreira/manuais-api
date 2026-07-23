@@ -1,97 +1,119 @@
 <!doctype html>
 <html lang="pt-br">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Acesse o acervo completo de manuais de serviço técnicos para motos." />
   <title>Acesso — Manuais de Serviço</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css?v=9" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=12" />
 </head>
 
 <body>
-  <div class="login-wrap">
+  <div class="login-bg">
     <div class="login-card">
-      <h1>🔧 Manuais de Serviço</h1>
-      <p class="subtitle">Consulte o acervo completo de manuais técnicos.</p>
+      <div class="login-logo">
+        <div class="login-logo-icon">🔧</div>
+        <h1>Manuais</h1>
+      </div>
+      <p class="login-subtitle">Acervo técnico completo de manuais de serviço para motos.</p>
 
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login">Entrar</button>
-        <button class="auth-tab" id="tab-register">Cadastrar-se</button>
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="tab-login" role="tab" aria-selected="true" aria-controls="panel-login">Entrar</button>
+        <button class="auth-tab" id="tab-register" role="tab" aria-selected="false" aria-controls="panel-register">Cadastrar-se</button>
       </div>
 
-      <!-- FORMULARIO DE LOGIN -->
-      <form id="login-form">
-        <label for="username">Usuário</label>
-        <input type="text" id="username" autocomplete="username" required autofocus
-          placeholder="Digite seu usuário..." />
-        <label for="password">Senha</label>
-        <input type="password" id="password" autocomplete="current-password" required
-          placeholder="Digite sua senha..." />
-        <div class="error-box" id="error-box" style="display:none;"></div>
-        <button type="submit" class="primary" id="submit-btn">Entrar no Sistema</button>
-      </form>
+      <!-- LOGIN FORM -->
+      <div id="panel-login" role="tabpanel">
+        <form id="login-form" autocomplete="on" novalidate>
+          <div class="form-group">
+            <label for="username">Usuário</label>
+            <input type="text" id="username" autocomplete="username" required
+              placeholder="Digite seu usuário…" autofocus />
+          </div>
+          <div class="form-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" autocomplete="current-password" required
+              placeholder="Digite sua senha…" />
+          </div>
+          <div class="error-box" id="error-box" style="display:none;" role="alert"></div>
+          <button type="submit" class="primary" id="submit-btn">
+            <span id="submit-label">Entrar no Sistema</span>
+          </button>
+        </form>
+      </div>
 
-      <!-- FORMULARIO DE CADASTRO -->
-      <form id="register-form" style="display:none;">
-        <label for="reg-username">Escolha um Usuário</label>
-        <input type="text" id="reg-username" autocomplete="username" placeholder="Mínimo 3 caracteres..." required />
-        <label for="reg-password">Crie uma Senha</label>
-        <input type="password" id="reg-password" autocomplete="new-password" placeholder="Mínimo 4 caracteres..."
-          required />
-        <label for="reg-confirm">Confirme a Senha</label>
-        <input type="password" id="reg-confirm" autocomplete="new-password" placeholder="Repita a senha..." required />
+      <!-- REGISTER FORM -->
+      <div id="panel-register" style="display:none;" role="tabpanel">
+        <form id="register-form" autocomplete="on" novalidate>
+          <div class="form-group">
+            <label for="reg-username">Escolha um usuário</label>
+            <input type="text" id="reg-username" autocomplete="username"
+              placeholder="Mínimo 3 caracteres…" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Crie uma senha</label>
+            <input type="password" id="reg-password" autocomplete="new-password"
+              placeholder="Mínimo 4 caracteres…" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-confirm">Confirme a senha</label>
+            <input type="password" id="reg-confirm" autocomplete="new-password"
+              placeholder="Repita a senha…" required />
+          </div>
 
-        <label style="margin-top:20px;margin-bottom:4px;">Escolha seu Plano</label>
-        <div class="plan-picker" id="plan-picker">
-          <!-- Preenchido via JS -->
-          <p style="color:var(--text-dim);font-size:0.85rem;">Carregando planos...</p>
-        </div>
+          <div class="form-group" style="margin-top: 20px;">
+            <label>Escolha seu Plano</label>
+            <div class="plan-picker" id="plan-picker">
+              <p style="color:var(--text-dim);font-size:var(--font-sm);">Carregando planos…</p>
+            </div>
+          </div>
 
-        <div class="error-box" id="reg-error-box" style="display:none;"></div>
-        <button type="submit" class="primary" id="reg-submit-btn">Criar Minha Conta</button>
-        <p style="font-size:0.75rem;color:var(--text-dim);margin-top:12px;text-align:center;">
-          Após o cadastro, um administrador ativará o seu plano.
-        </p>
-      </form>
-
+          <div class="error-box" id="reg-error-box" style="display:none;" role="alert"></div>
+          <button type="submit" class="primary" id="reg-submit-btn">
+            <span id="reg-submit-label">Criar Minha Conta</span>
+          </button>
+          <p style="font-size:var(--font-xs);color:var(--text-muted);margin-top:12px;text-align:center;">
+            Após o cadastro, um administrador ativará o seu plano.
+          </p>
+        </form>
+      </div>
 
     </div>
   </div>
 
   <script>
-    const tabLogin = document.getElementById("tab-login");
+    const tabLogin    = document.getElementById("tab-login");
     const tabRegister = document.getElementById("tab-register");
-    const loginForm = document.getElementById("login-form");
-    const registerForm = document.getElementById("register-form");
+    const panelLogin  = document.getElementById("panel-login");
+    const panelReg    = document.getElementById("panel-register");
 
     let selectedPlanId = null;
 
-    tabLogin.addEventListener("click", () => {
-      tabLogin.classList.add("active");
-      tabRegister.classList.remove("active");
-      loginForm.style.display = "block";
-      registerForm.style.display = "none";
-    });
+    function switchTab(to) {
+      const isLogin = to === "login";
+      tabLogin.classList.toggle("active", isLogin);
+      tabRegister.classList.toggle("active", !isLogin);
+      tabLogin.setAttribute("aria-selected", isLogin);
+      tabRegister.setAttribute("aria-selected", !isLogin);
+      panelLogin.style.display = isLogin ? "block" : "none";
+      panelReg.style.display   = isLogin ? "none"  : "block";
+      if (!isLogin) loadPlans();
+    }
 
-    tabRegister.addEventListener("click", () => {
-      tabRegister.classList.add("active");
-      tabLogin.classList.remove("active");
-      loginForm.style.display = "none";
-      registerForm.style.display = "block";
-      loadPlans();
-    });
+    tabLogin.addEventListener("click",    () => switchTab("login"));
+    tabRegister.addEventListener("click", () => switchTab("register"));
 
-    // Carregar planos disponíveis
     async function loadPlans() {
       const picker = document.getElementById("plan-picker");
+      if (picker.dataset.loaded) return;
       try {
-        const res = await fetch("/api/plans");
+        const res   = await fetch("/api/plans");
         const plans = await res.json();
         if (!plans.length) {
-          picker.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem;">Nenhum plano disponível no momento.</p>';
+          picker.innerHTML = '<p style="color:var(--text-dim);font-size:var(--font-sm);">Nenhum plano disponível.</p>';
           return;
         }
         picker.innerHTML = plans.map(p => `
@@ -100,17 +122,17 @@
             <div class="plan-radio-dot"></div>
             <div class="plan-card-body">
               <div class="plan-card-header">
-                <span class="plan-card-name">${escapeHtml(p.name)}</span>
-                <span class="plan-card-price">R$ ${Number(p.price).toFixed(2).replace('.', ',')}<small style="font-size:0.7rem;color:var(--text-dim);font-weight:400;">/mês</small></span>
+                <span class="plan-card-name">${escHtml(p.name)}</span>
+                <span class="plan-card-price">R$ ${Number(p.price).toFixed(2).replace('.', ',')}<small style="font-size:0.7em;color:var(--text-dim);font-weight:400;">/mês</small></span>
               </div>
-              <div class="plan-card-desc">${escapeHtml(p.description || '')}</div>
+              <div class="plan-card-desc">${escHtml(p.description || '')}</div>
             </div>
           </label>
         `).join("");
-        // Selecionar o primeiro automaticamente
+        picker.dataset.loaded = "1";
         if (plans.length > 0) selectPlan(plans[0].id);
-      } catch (e) {
-        picker.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem;">Não foi possível carregar os planos.</p>';
+      } catch {
+        picker.innerHTML = '<p style="color:var(--text-dim);font-size:var(--font-sm);">Não foi possível carregar os planos.</p>';
       }
     }
 
@@ -118,27 +140,24 @@
       selectedPlanId = id;
       document.querySelectorAll(".plan-card").forEach(c => c.classList.remove("selected"));
       const card = document.getElementById("plan-card-" + id);
-      if (card) {
-        card.classList.add("selected");
-        card.querySelector("input[type=radio]").checked = true;
-      }
+      if (card) { card.classList.add("selected"); card.querySelector("input[type=radio]").checked = true; }
     };
 
-    function escapeHtml(str) {
-      const d = document.createElement("div");
-      d.textContent = str;
-      return d.innerHTML;
+    function escHtml(str) {
+      const d = document.createElement("div"); d.textContent = str; return d.innerHTML;
     }
 
-    // SUBMIT LOGIN
-    const errorBox = document.getElementById("error-box");
+    // LOGIN
+    const errorBox  = document.getElementById("error-box");
     const submitBtn = document.getElementById("submit-btn");
+    const submitLbl = document.getElementById("submit-label");
 
-    loginForm.addEventListener("submit", async (e) => {
+    document.getElementById("login-form").addEventListener("submit", async e => {
       e.preventDefault();
       errorBox.style.display = "none";
       submitBtn.disabled = true;
-      submitBtn.textContent = "Entrando...";
+      submitLbl.textContent = "Entrando…";
+      submitBtn.insertAdjacentHTML("afterbegin", '<span class="spinner" style="width:14px;height:14px;"></span>');
       try {
         const res = await fetch("/auth/login", {
           method: "POST",
@@ -154,43 +173,42 @@
           errorBox.textContent = data.detail || "Usuário ou senha inválidos.";
           errorBox.style.display = "block";
           submitBtn.disabled = false;
-          submitBtn.textContent = "Entrar no Sistema";
+          submitLbl.textContent = "Entrar no Sistema";
+          submitBtn.querySelector(".spinner")?.remove();
           return;
         }
         const data = await res.json();
-        if (data.is_admin) {
-          window.location.href = "/admin";
-        } else {
-          window.location.href = "/";
-        }
-      } catch (err) {
+        submitLbl.textContent = "✓ Entrando…";
+        setTimeout(() => {
+          window.location.href = data.is_admin ? "/admin" : "/";
+        }, 300);
+      } catch {
         errorBox.textContent = "Não foi possível conectar ao servidor.";
         errorBox.style.display = "block";
         submitBtn.disabled = false;
-        submitBtn.textContent = "Entrar no Sistema";
+        submitLbl.textContent = "Entrar no Sistema";
+        submitBtn.querySelector(".spinner")?.remove();
       }
     });
 
-    // SUBMIT CADASTRO
-    const regErrorBox = document.getElementById("reg-error-box");
+    // REGISTER
+    const regErrorBox  = document.getElementById("reg-error-box");
     const regSubmitBtn = document.getElementById("reg-submit-btn");
+    const regSubmitLbl = document.getElementById("reg-submit-label");
 
-    registerForm.addEventListener("submit", async (e) => {
+    document.getElementById("register-form").addEventListener("submit", async e => {
       e.preventDefault();
       regErrorBox.style.display = "none";
-
-      const pass = document.getElementById("reg-password").value;
+      const pass    = document.getElementById("reg-password").value;
       const confirm = document.getElementById("reg-confirm").value;
-
       if (pass !== confirm) {
         regErrorBox.textContent = "As senhas não conferem.";
         regErrorBox.style.display = "block";
         return;
       }
-
       regSubmitBtn.disabled = true;
-      regSubmitBtn.textContent = "Criando conta...";
-
+      regSubmitLbl.textContent = "Criando conta…";
+      regSubmitBtn.insertAdjacentHTML("afterbegin", '<span class="spinner" style="width:14px;height:14px;"></span>');
       try {
         const res = await fetch("/auth/register", {
           method: "POST",
@@ -206,18 +224,20 @@
           regErrorBox.textContent = data.detail || "Erro ao criar conta.";
           regErrorBox.style.display = "block";
           regSubmitBtn.disabled = false;
-          regSubmitBtn.textContent = "Criar Minha Conta";
+          regSubmitLbl.textContent = "Criar Minha Conta";
+          regSubmitBtn.querySelector(".spinner")?.remove();
           return;
         }
-        window.location.href = "/";
-      } catch (err) {
+        regSubmitLbl.textContent = "✓ Conta criada!";
+        setTimeout(() => { window.location.href = "/"; }, 500);
+      } catch {
         regErrorBox.textContent = "Não foi possível conectar ao servidor.";
         regErrorBox.style.display = "block";
         regSubmitBtn.disabled = false;
-        regSubmitBtn.textContent = "Criar Minha Conta";
+        regSubmitLbl.textContent = "Criar Minha Conta";
+        regSubmitBtn.querySelector(".spinner")?.remove();
       }
     });
   </script>
 </body>
-
 </html>

@@ -20,6 +20,9 @@ const el = {
   historyModal: document.getElementById("history-modal"),
   historyCloseBtn: document.getElementById("history-close-btn"),
   globalHistoryList: document.getElementById("global-history-list"),
+  userAvatar: document.getElementById("user-avatar"),
+  breadcrumbManual: document.getElementById("breadcrumb-manual"),
+  topbarBreadcrumb: document.getElementById("topbar-breadcrumb"),
 };
 
 async function api(path, options = {}) {
@@ -36,6 +39,7 @@ async function init() {
   const me = await meRes.json();
   state.currentUser = me;
   el.usernameLabel.textContent = me.username;
+  if (el.userAvatar) el.userAvatar.textContent = (me.username || "?")[0].toUpperCase();
 
   if (me.is_admin) {
     const adminLink = document.getElementById("admin-panel-link");
@@ -294,14 +298,31 @@ async function selectManual(id) {
 function renderContent() {
   const m = state.activeManual;
   if (!m) {
-    el.content.innerHTML = '<div class="empty-state">Selecione uma moto na lista ao lado.</div>';
+    // Update breadcrumb
+    if (el.topbarBreadcrumb) el.topbarBreadcrumb.style.display = "none";
+    el.content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🏍️</div>
+        <h3>Bem-vindo ao Acervo</h3>
+        <p>Selecione uma moto na lista para consultar o manual técnico completo.</p>
+      </div>`;
     return;
+  }
+
+  // Update breadcrumb
+  if (el.topbarBreadcrumb && el.breadcrumbManual) {
+    el.breadcrumbManual.textContent = `${m.brand} ${m.model} ${m.year}`;
+    el.topbarBreadcrumb.style.display = "flex";
   }
 
   el.content.innerHTML = `
     <div class="manual-header">
-      <h2>${m.brand} ${m.model}</h2>
-      <div class="meta">${m.year} · ${m.pages} páginas ${m.language ? "· manual em " + (m.language === "pt" ? "português" : "inglês") : ""}</div>
+      <h2>${escapeHtml(m.brand)} ${escapeHtml(m.model)}</h2>
+      <div class="meta">
+        <span>📅 ${escapeHtml(m.year)}</span>
+        <span>📄 ${m.pages} páginas</span>
+        ${m.language ? `<span>${m.language === "pt" ? "🇧🇷 Português" : "🇺🇸 English"}</span>` : ""}
+      </div>
     </div>
 
     ${!m.searchable ? `<div class="notice warn">Este manual é escaneado e ainda não foi processado com OCR. Busca e perguntas ficarão disponíveis assim que o texto for extraído.</div>` : ""}
