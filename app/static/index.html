@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css?v=9" />
+<link rel="stylesheet" href="/static/style.css?v=10" />
 </head>
 <body>
 <div class="app-shell">
@@ -17,6 +17,7 @@
       <h1>🔧 Manuais de Serviço</h1>
     </div>
     <div class="user-box">
+      <button class="btn-secondary" id="history-btn">📜 <span class="btn-text">Histórico</span></button>
       <button class="btn-secondary" id="suggest-manual-btn">📤 <span class="btn-text">Sugerir Manual</span></button>
       <a href="/admin" class="btn-admin" id="admin-panel-link" style="display:none;">⚙️ <span class="btn-text">Admin</span></a>
       <span id="username-label"></span>
@@ -52,9 +53,9 @@
     <span class="bn-icon">🔍</span>
     Buscar
   </button>
-  <button class="bottom-nav-btn" id="bn-suggest" onclick="document.getElementById('suggest-manual-btn').click()">
-    <span class="bn-icon">📤</span>
-    Sugerir
+  <button class="bottom-nav-btn" id="bn-history" data-tab="history">
+    <span class="bn-icon">📜</span>
+    Histórico
   </button>
 </nav>
 
@@ -108,7 +109,20 @@
   </div>
 </div>
 
+<!-- Modal de Histórico Global -->
+<div id="history-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card" style="max-width: 600px; width: 100%;">
+    <div class="modal-header">
+      <h2>📜 Meu Histórico de Perguntas</h2>
+      <button class="modal-close" id="history-close-btn">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;">
+      <div id="global-history-list">Carregando histórico...</div>
+    </div>
+  </div>
+</div>
+
 <script src="/static/marked.min.js"></script>
-<script src="/static/app.js?v=9"></script>
+<script src="/static/app.js?v=11"></script>
 </body>
 </html>

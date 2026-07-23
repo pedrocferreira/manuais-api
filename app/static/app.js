@@ -16,6 +16,10 @@ const el = {
   hamburgerBtn: document.getElementById("hamburger-btn"),
   sidebarCloseBtn: document.getElementById("sidebar-close-btn"),
   bottomNav: document.getElementById("bottom-nav"),
+  historyBtn: document.getElementById("history-btn"),
+  historyModal: document.getElementById("history-modal"),
+  historyCloseBtn: document.getElementById("history-close-btn"),
+  globalHistoryList: document.getElementById("global-history-list"),
 };
 
 async function api(path, options = {}) {
@@ -44,6 +48,7 @@ async function init() {
   });
 
   setupSuggestModal();
+  setupHistoryModal();
   setupMobileNav();
 
   const manualsRes = await api("/manuals");
@@ -304,6 +309,7 @@ function renderContent() {
     <div class="tabs">
       <button data-tab="ask" class="${state.activeTab === "ask" ? "active" : ""}">Perguntar</button>
       <button data-tab="search" class="${state.activeTab === "search" ? "active" : ""}">Buscar no manual</button>
+      <button data-tab="history" class="${state.activeTab === "history" ? "active" : ""}">Histórico</button>
     </div>
 
     <div id="tab-body"></div>
@@ -370,7 +376,7 @@ function renderContent() {
     if (voiceSupported && !disabled) {
       setupVoiceInput(m.id);
     }
-  } else {
+  } else if (state.activeTab === "search") {
     tabBody.innerHTML = `
       <div class="ask-row">
         <input type="search" id="search-input" placeholder="Ex.: torque parafuso dreno óleo" ${disabled ? "disabled" : ""} style="flex:1" />
@@ -382,6 +388,13 @@ function renderContent() {
     document.getElementById("search-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter") runSearch(m.id);
     });
+  } else if (state.activeTab === "history") {
+    tabBody.innerHTML = `
+      <div id="history-tab-result">
+        <div class="notice info"><span class="spinner"></span>Carregando histórico...</div>
+      </div>
+    `;
+    loadHistoryTab(m.id);
   }
 }
 
@@ -684,6 +697,142 @@ function setupVoiceInput(manualId) {
     }
   });
 }
+
+// ── History ──────────────────────────────────────────────────────────────────
+
+function setupHistoryModal() {
+  if (!el.historyBtn || !el.historyModal || !el.historyCloseBtn) return;
+
+  const openModal = () => {
+    el.historyModal.style.display = "flex";
+    loadGlobalHistory();
+  };
+  const closeModal = () => {
+    el.historyModal.style.display = "none";
+  };
+
+  el.historyBtn.addEventListener("click", openModal);
+  el.historyCloseBtn.addEventListener("click", closeModal);
+  el.historyModal.addEventListener("click", (e) => {
+    if (e.target === el.historyModal) closeModal();
+  });
+}
+
+async function loadGlobalHistory() {
+  if (!el.globalHistoryList) return;
+  el.globalHistoryList.innerHTML = '<div class="notice info"><span class="spinner"></span>Carregando...</div>';
+  try {
+    const res = await api("/api/history?limit=30");
+    const data = await res.json();
+    renderHistoryItems(data, el.globalHistoryList, true);
+  } catch (err) {
+    el.globalHistoryList.innerHTML = '<div class="notice warn">Erro ao carregar histórico.</div>';
+  }
+}
+
+async function loadHistoryTab(manualId) {
+  const container = document.getElementById("history-tab-result");
+  if (!container) return;
+  try {
+    const res = await api(`/api/history?manual_id=${manualId}&limit=30`);
+    const data = await res.json();
+    renderHistoryItems(data, container, false);
+  } catch (err) {
+    container.innerHTML = '<div class="notice warn">Erro ao carregar histórico.</div>';
+  }
+}
+
+function renderHistoryItems(items, container, isGlobal) {
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p class="empty-state">Nenhuma pergunta encontrada no histórico.</p>';
+    return;
+  }
+
+  const modeClass = (mode) => {
+    if (mode?.includes("groq")) return "mode-groq";
+    if (mode?.includes("gemini")) return "mode-gemini";
+    if (mode === "search") return "mode-search";
+    if (mode === "quota") return "mode-quota";
+    return "mode-error";
+  };
+
+  const html = items.map(q => {
+    const dateStr = q.created_at
+      ? new Date(q.created_at + "Z").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : "-";
+    
+    return `
+      <div class="history-item">
+        <div class="history-question">${escapeHtml(q.question)}</div>
+        <div class="history-meta">
+          ${isGlobal && q.manual_brand ? `<span class="h-tag">🏍️ ${escapeHtml(q.manual_brand)} ${escapeHtml(q.manual_model || "")}</span>` : ""}
+          <span class="h-tag">🕐 ${dateStr}</span>
+          <span class="h-mode-badge ${modeClass(q.response_mode)}">${q.response_mode?.replace("llm-", "") || "?"}</span>
+        </div>
+        <div class="history-actions">
+          <button class="btn-secondary btn-small" onclick="showCachedAnswer(this)" data-payload="${escapeHtml(JSON.stringify(q))}">
+            Ver resposta
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+  
+  container.innerHTML = `<div class="history-list">${html}</div>`;
+}
+
+window.showCachedAnswer = async function(btnEl) {
+  const qStr = btnEl.getAttribute("data-payload");
+  if (!qStr) return;
+  const q = JSON.parse(qStr);
+
+  if (!q.answer) {
+    // Falta o cache no banco (pesquisas antigas) - fall back for re-asking
+    alert("Esta pesquisa é antiga e não possui resposta salva. Por favor, pesquise novamente.");
+    return;
+  }
+
+  // Se estiver no modal global, fecha
+  if (el.historyModal) el.historyModal.style.display = "none";
+  
+  // Troca pro manual certo se não estiver nele
+  if (!state.activeManual || state.activeManual.id !== q.manual_id) {
+    const res = await api(`/manuals/${q.manual_id}`);
+    state.activeManual = await res.json();
+  }
+  
+  // Muda para a aba ask e renderiza
+  state.activeTab = "ask";
+  renderManualList();
+  renderContent();
+  updateBottomNav("ask");
+  closeSidebarMobile();
+  
+  setTimeout(() => {
+    const input = document.getElementById("ask-input");
+    if (input) {
+      input.value = q.question;
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 160) + "px";
+    }
+
+    const resultBox = document.getElementById("ask-result");
+    if (resultBox) {
+      // Reconstroi o HTML da resposta e referencias
+      const data = {
+        answer: q.answer,
+        manual_id: q.manual_id,
+      };
+      
+      let html = "";
+      html += renderAnswerHtml(data);
+      html += renderReferences(q.references || []);
+      resultBox.innerHTML = html;
+      
+      // Remove the lead class from previous requests if needed, but it's handled by renderAnswerHtml
+    }
+  }, 100);
+};
 
 init();
 

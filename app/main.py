@@ -255,11 +255,39 @@ def ask_manual(manual_id: str, body: AskRequest, user: dict = Depends(auth.get_c
         raise HTTPException(422, "Este manual e escaneado (sem texto) e ainda nao foi indexado com OCR.")
     con = db.get_con()
     result = rag.answer(con, manual, body.question)
-    con.close()
+
     terms = result.get("terms", [])
     for r in result["references"]:
         r["pdf_url"] = f"/manuals/{manual_id}/pdf#page={r['page']}"
         r["image_url"] = pages.image_url(manual_id, r["page"], terms)
+
+    # --- Log de uso para analytics e histórico ---
+    try:
+        import json
+        con.execute(
+            """
+            INSERT INTO usage_logs (user_id, username, manual_id, manual_brand, manual_model, question, response_mode, pages_used, answer, references_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user.get("id"),
+                user.get("username"),
+                manual_id,
+                manual.get("brand"),
+                manual.get("model"),
+                body.question,
+                result.get("mode", "unknown"),
+                len(result.get("references", [])),
+                result.get("answer", ""),
+                json.dumps(result.get("references", [])),
+            ),
+        )
+        con.commit()
+    except Exception as e:
+        print("Log DB falhou:", e)
+        pass  # Nao falhar a resposta por causa do log
+
+    con.close()
     return {"manual_id": manual_id, "question": body.question} | result
 
 
@@ -604,6 +632,158 @@ def select_manual_for_plan(body: SelectManualRequest, user: dict = Depends(auth.
     con.commit()
     con.close()
     return {"ok": True, "message": "Manual selecionado com sucesso."}
+
+
+# --- HISTÓRICO DO USUÁRIO ---
+
+@app.get("/api/history")
+def get_user_history(
+    manual_id: str | None = Query(None),
+    limit: int = Query(50, le=200),
+    user: dict = Depends(auth.get_current_user),
+):
+    """Retorna o histórico de perguntas do usuário logado."""
+    con = db.get_con()
+    if manual_id:
+        rows = con.execute(
+            """
+            SELECT question, manual_id, manual_brand, manual_model, response_mode, pages_used, answer, references_json, created_at
+            FROM usage_logs
+            WHERE user_id = ? AND manual_id = ?
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (user["id"], manual_id, limit),
+        ).fetchall()
+    else:
+        rows = con.execute(
+            """
+            SELECT question, manual_id, manual_brand, manual_model, response_mode, pages_used, answer, references_json, created_at
+            FROM usage_logs
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (user["id"], limit),
+        ).fetchall()
+    con.close()
+    
+    import json
+    results = []
+    for r in rows:
+        d = dict(r)
+        refs = d.pop("references_json", None)
+        d["references"] = json.loads(refs) if refs else []
+        results.append(d)
+        
+    return results
+
+
+# --- ANALYTICS ---
+
+@app.get("/api/admin/analytics")
+def get_analytics(admin: dict = Depends(auth.get_current_admin_user)):
+    con = db.get_con()
+
+    # Total de perguntas
+    total_questions = con.execute("SELECT COUNT(*) as c FROM usage_logs").fetchone()["c"]
+
+    # Perguntas hoje
+    questions_today = con.execute(
+        "SELECT COUNT(*) as c FROM usage_logs WHERE date(created_at) = date('now')"
+    ).fetchone()["c"]
+
+    # Perguntas por dia (ultimos 30 dias)
+    questions_by_day = [
+        dict(r) for r in con.execute(
+            """
+            SELECT date(created_at) as date, COUNT(*) as count
+            FROM usage_logs
+            WHERE created_at >= datetime('now', '-30 days')
+            GROUP BY date(created_at)
+            ORDER BY date(created_at)
+            """
+        ).fetchall()
+    ]
+
+    # Top 10 manuais mais consultados
+    top_manuals = [
+        dict(r) for r in con.execute(
+            """
+            SELECT manual_id, manual_brand as brand, manual_model as model, COUNT(*) as count
+            FROM usage_logs
+            WHERE manual_id IS NOT NULL
+            GROUP BY manual_id
+            ORDER BY count DESC
+            LIMIT 10
+            """
+        ).fetchall()
+    ]
+
+    # Top 10 usuarios mais ativos
+    top_users = [
+        dict(r) for r in con.execute(
+            """
+            SELECT username, COUNT(*) as count
+            FROM usage_logs
+            WHERE username IS NOT NULL
+            GROUP BY username
+            ORDER BY count DESC
+            LIMIT 10
+            """
+        ).fetchall()
+    ]
+
+    # Uso por provedor de IA
+    llm_rows = con.execute(
+        """
+        SELECT response_mode, COUNT(*) as count
+        FROM usage_logs
+        GROUP BY response_mode
+        """
+    ).fetchall()
+    llm_usage = {r["response_mode"]: r["count"] for r in llm_rows}
+
+    # Media de paginas por pergunta
+    avg_row = con.execute(
+        "SELECT AVG(pages_used) as avg_pages FROM usage_logs WHERE pages_used > 0"
+    ).fetchone()
+    avg_pages = round(avg_row["avg_pages"], 1) if avg_row["avg_pages"] else 0
+
+    # 20 perguntas mais recentes
+    recent_questions = [
+        dict(r) for r in con.execute(
+            """
+            SELECT username, manual_brand, manual_model, question, response_mode, pages_used, created_at
+            FROM usage_logs
+            ORDER BY created_at DESC
+            LIMIT 20
+            """
+        ).fetchall()
+    ]
+
+    # Perguntas esta semana vs semana passada
+    this_week = con.execute(
+        "SELECT COUNT(*) as c FROM usage_logs WHERE created_at >= datetime('now', '-7 days')"
+    ).fetchone()["c"]
+    last_week = con.execute(
+        "SELECT COUNT(*) as c FROM usage_logs WHERE created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days')"
+    ).fetchone()["c"]
+
+    con.close()
+
+    return {
+        "total_questions": total_questions,
+        "questions_today": questions_today,
+        "questions_this_week": this_week,
+        "questions_last_week": last_week,
+        "questions_by_day": questions_by_day,
+        "top_manuals": top_manuals,
+        "top_users": top_users,
+        "llm_usage": llm_usage,
+        "avg_pages_per_question": avg_pages,
+        "recent_questions": recent_questions,
+    }
 
 
 @app.get("/auth/me")

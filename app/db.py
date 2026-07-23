@@ -91,6 +91,36 @@ def ensure_users_table() -> None:
         """
     )
 
+    # --- Tabela de logs de uso (analytics) ---
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usage_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            username TEXT,
+            manual_id TEXT,
+            manual_brand TEXT,
+            manual_model TEXT,
+            question TEXT,
+            response_mode TEXT,
+            pages_used INTEGER DEFAULT 0,
+            answer TEXT,
+            references_json TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
+    
+    # Migração para adicionar answer e references_json caso não existam (já que a tabela já pode estar criada no ambiente do user)
+    try:
+        con.execute("ALTER TABLE usage_logs ADD COLUMN answer TEXT")
+    except sqlite3.OperationalError:
+        pass  # coluna já existe
+    try:
+        con.execute("ALTER TABLE usage_logs ADD COLUMN references_json TEXT")
+    except sqlite3.OperationalError:
+        pass  # coluna já existe
+
     con.commit()
     con.close()
 

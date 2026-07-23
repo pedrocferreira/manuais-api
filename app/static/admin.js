@@ -5,6 +5,8 @@ const el = {
   statManuals: document.getElementById("stat-manuals"),
   statUsers: document.getElementById("stat-users"),
   statPlans: document.getElementById("stat-plans"),
+  statTotalQuestions: document.getElementById("stat-total-questions"),
+  statTodayQuestions: document.getElementById("stat-today-questions"),
   pendingBadge: document.getElementById("pending-badge"),
   submissionsList: document.getElementById("submissions-list"),
   catalogList: document.getElementById("catalog-list"),
@@ -18,6 +20,14 @@ const el = {
   fileInput: document.getElementById("file-input"),
   btnUpload: document.getElementById("btn-upload"),
   uploadStatus: document.getElementById("upload-status"),
+  analyticsWeekBadge: document.getElementById("analytics-week-badge"),
+  analyticsAvgBadge: document.getElementById("analytics-avg-badge"),
+  questionsChart: document.getElementById("questions-chart"),
+  chartEmpty: document.getElementById("chart-empty"),
+  llmUsageChart: document.getElementById("llm-usage-chart"),
+  topManualsList: document.getElementById("top-manuals-list"),
+  topUsersList: document.getElementById("top-users-list"),
+  recentQuestionsList: document.getElementById("recent-questions-list"),
 };
 
 let allPlans = [];
@@ -62,7 +72,7 @@ async function init() {
 }
 
 async function loadData() {
-  await Promise.all([loadPlans(), loadUsers(), loadSubmissions(), loadCatalog()]);
+  await Promise.all([loadPlans(), loadUsers(), loadSubmissions(), loadCatalog(), loadAnalytics()]);
 }
 
 // ─── Plans ───────────────────────────────────────────────────────────────────
@@ -485,6 +495,280 @@ async function handleUpload(e) {
   } finally {
     el.btnUpload.disabled = false;
   }
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+async function loadAnalytics() {
+  try {
+    const res = await api("/api/admin/analytics");
+    const data = await res.json();
+    renderAnalytics(data);
+  } catch (e) {
+    console.warn("Analytics load failed", e);
+  }
+}
+
+function renderAnalytics(data) {
+  // Stat cards
+  if (el.statTotalQuestions) el.statTotalQuestions.textContent = data.total_questions;
+  if (el.statTodayQuestions) el.statTodayQuestions.textContent = data.questions_today;
+
+  // Badges
+  if (el.analyticsWeekBadge) {
+    const diff = data.questions_last_week > 0
+      ? Math.round(((data.questions_this_week - data.questions_last_week) / data.questions_last_week) * 100)
+      : (data.questions_this_week > 0 ? 100 : 0);
+    const arrow = diff > 0 ? "↑" : diff < 0 ? "↓" : "→";
+    el.analyticsWeekBadge.textContent = `Esta semana: ${data.questions_this_week} (${arrow}${Math.abs(diff)}%)`;
+  }
+  if (el.analyticsAvgBadge) {
+    el.analyticsAvgBadge.textContent = `Média pág/pergunta: ${data.avg_pages_per_question}`;
+  }
+
+  // Chart
+  renderBarChart(data.questions_by_day);
+
+  // LLM usage
+  renderLLMUsage(data.llm_usage);
+
+  // Rankings
+  renderRanking(el.topManualsList, data.top_manuals.map(m => ({
+    name: `${m.brand} ${m.model}`,
+    count: m.count,
+  })));
+  renderRanking(el.topUsersList, data.top_users.map(u => ({
+    name: u.username,
+    count: u.count,
+  })));
+
+  // Recent questions
+  renderRecentQuestions(data.recent_questions);
+}
+
+// ─── Bar Chart (Canvas) ──────────────────────────────────────────────────────
+
+function renderBarChart(dayData) {
+  const canvas = el.questionsChart;
+  const emptyMsg = el.chartEmpty;
+  if (!canvas) return;
+
+  if (!dayData || dayData.length === 0) {
+    canvas.style.display = "none";
+    if (emptyMsg) emptyMsg.style.display = "block";
+    return;
+  }
+  canvas.style.display = "block";
+  if (emptyMsg) emptyMsg.style.display = "none";
+
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const H = 220;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.scale(dpr, dpr);
+
+  // Fill last 30 days
+  const filled = fillLast30Days(dayData);
+  const maxVal = Math.max(...filled.map(d => d.count), 1);
+
+  const padL = 40, padR = 12, padT = 16, padB = 32;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const barW = Math.max((chartW / filled.length) - 3, 2);
+  const gap = (chartW - barW * filled.length) / (filled.length - 1 || 1);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  const gridSteps = 4;
+  for (let i = 0; i <= gridSteps; i++) {
+    const y = padT + (chartH / gridSteps) * i;
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(W - padR, y);
+    ctx.stroke();
+
+    // Labels
+    const val = Math.round(maxVal - (maxVal / gridSteps) * i);
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.font = "11px Outfit, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(val, padL - 6, y + 4);
+  }
+
+  // Bars
+  filled.forEach((d, i) => {
+    const x = padL + i * (barW + gap);
+    const h = (d.count / maxVal) * chartH;
+    const y = padT + chartH - h;
+
+    // Gradient
+    const grad = ctx.createLinearGradient(x, y, x, padT + chartH);
+    grad.addColorStop(0, "#ff7a1a");
+    grad.addColorStop(1, "#e65c00");
+    ctx.fillStyle = d.count > 0 ? grad : "rgba(255,255,255,0.04)";
+
+    // Rounded rect
+    const r = Math.min(barW / 2, 4);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + barW - r, y);
+    ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+    ctx.lineTo(x + barW, padT + chartH);
+    ctx.lineTo(x, padT + chartH);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.fill();
+
+    // Date labels (every 5th day)
+    if (i % 5 === 0 || i === filled.length - 1) {
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.font = "10px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      const label = d.date.slice(5); // MM-DD
+      ctx.fillText(label, x + barW / 2, H - 8);
+    }
+  });
+}
+
+function fillLast30Days(dayData) {
+  const map = {};
+  dayData.forEach(d => { map[d.date] = d.count; });
+
+  const result = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    result.push({ date: key, count: map[key] || 0 });
+  }
+  return result;
+}
+
+// ─── LLM Usage ───────────────────────────────────────────────────────────────
+
+function renderLLMUsage(usage) {
+  if (!el.llmUsageChart) return;
+  const entries = Object.entries(usage || {});
+  if (entries.length === 0) {
+    el.llmUsageChart.innerHTML = '<p class="empty-text">Nenhum dado disponível.</p>';
+    return;
+  }
+
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  const colorMap = {
+    "llm-groq": "#34d399",
+    "llm-gemini": "#60a5fa",
+    "search": "#fbbf24",
+    "quota": "#ef4444",
+    "error": "#f87171",
+  };
+  const labelMap = {
+    "llm-groq": "Groq (LLM)",
+    "llm-gemini": "Gemini (LLM)",
+    "search": "Busca Simples",
+    "quota": "Cota Excedida",
+    "error": "Erro",
+  };
+
+  let html = entries.map(([mode, count]) => {
+    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+    const color = colorMap[mode] || "#9ca3af";
+    const label = labelMap[mode] || mode;
+    return `
+      <div class="llm-item">
+        <div class="llm-item-header">
+          <span class="llm-item-label"><span class="llm-item-dot" style="background:${color}"></span>${escapeHtml(label)}</span>
+          <span class="llm-item-count">${count} (${pct}%)</span>
+        </div>
+        <div class="llm-item-bar">
+          <div class="llm-item-bar-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  html += `<div class="llm-total">Total: ${total} consultas</div>`;
+  el.llmUsageChart.innerHTML = html;
+}
+
+// ─── Ranking ─────────────────────────────────────────────────────────────────
+
+function renderRanking(container, items) {
+  if (!container) return;
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p class="empty-text">Nenhum dado disponível.</p>';
+    return;
+  }
+
+  const maxCount = items[0].count;
+  container.innerHTML = items.map((item, i) => {
+    const posClass = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    const pct = maxCount > 0 ? ((item.count / maxCount) * 100).toFixed(0) : 0;
+    return `
+      <div class="ranking-item">
+        <div class="ranking-position ${posClass}">${i + 1}</div>
+        <div class="ranking-info">
+          <div class="ranking-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+          <div class="ranking-bar-wrap">
+            <div class="ranking-bar-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <div class="ranking-count">${item.count}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ─── Recent Questions ────────────────────────────────────────────────────────
+
+function renderRecentQuestions(questions) {
+  if (!el.recentQuestionsList) return;
+  if (!questions || questions.length === 0) {
+    el.recentQuestionsList.innerHTML = '<p class="empty-text">Nenhuma pergunta registrada.</p>';
+    return;
+  }
+
+  const modeClass = (mode) => {
+    if (mode?.includes("groq")) return "rq-mode-groq";
+    if (mode?.includes("gemini")) return "rq-mode-gemini";
+    if (mode === "search") return "rq-mode-search";
+    if (mode === "quota") return "rq-mode-quota";
+    return "rq-mode-error";
+  };
+  const modeLabel = (mode) => {
+    if (mode?.includes("groq")) return "Groq";
+    if (mode?.includes("gemini")) return "Gemini";
+    if (mode === "search") return "Busca";
+    if (mode === "quota") return "Cota";
+    return mode || "?";
+  };
+
+  el.recentQuestionsList.innerHTML = questions.map(q => {
+    const dateStr = q.created_at
+      ? new Date(q.created_at + "Z").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : "-";
+    return `
+      <div class="rq-item">
+        <div class="rq-question">${escapeHtml(q.question)}</div>
+        <div class="rq-meta">
+          <span class="rq-meta-tag">👤 ${escapeHtml(q.username || "anônimo")}</span>
+          <span class="rq-meta-tag">🏍️ ${escapeHtml((q.manual_brand || "") + " " + (q.manual_model || ""))}</span>
+          <span class="rq-meta-tag">📄 ${q.pages_used || 0} pág</span>
+          <span class="rq-mode-badge ${modeClass(q.response_mode)}">${modeLabel(q.response_mode)}</span>
+          <span class="rq-meta-tag">🕐 ${dateStr}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function escapeHtml(str) {

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/style.css?v=9" />
+<link rel="stylesheet" href="/static/style.css?v=10" />
 </head>
 <body class="admin-page">
 <div class="admin-shell">
@@ -24,7 +24,7 @@
 
   <main class="admin-container">
     <!-- STATS / HEADER CARDS -->
-    <div class="stats-grid">
+    <div class="stats-grid stats-grid-6">
       <div class="stat-card">
         <span class="stat-title">Submissões Pendentes</span>
         <span class="stat-value" id="stat-pending">0</span>
@@ -41,7 +41,71 @@
         <span class="stat-title">Planos Ativos</span>
         <span class="stat-value" id="stat-plans">0</span>
       </div>
+      <div class="stat-card stat-card-accent">
+        <span class="stat-title">Total de Perguntas</span>
+        <span class="stat-value" id="stat-total-questions">0</span>
+      </div>
+      <div class="stat-card stat-card-accent">
+        <span class="stat-title">Perguntas Hoje</span>
+        <span class="stat-value" id="stat-today-questions">0</span>
+      </div>
     </div>
+
+    <!-- SEÇÃO: ANALYTICS DE USO -->
+    <section class="admin-card analytics-section">
+      <div class="card-header">
+        <h2>📊 Analytics de Uso</h2>
+        <div class="analytics-period-info">
+          <span class="badge" id="analytics-week-badge">Esta semana: 0</span>
+          <span class="badge" id="analytics-avg-badge">Média pág/pergunta: 0</span>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <!-- Gráfico de perguntas por dia -->
+        <div class="analytics-chart-wrap">
+          <h3 class="analytics-subtitle">📈 Perguntas por dia <span class="dim">(últimos 30 dias)</span></h3>
+          <div class="chart-container">
+            <canvas id="questions-chart" width="800" height="220"></canvas>
+            <p class="empty-text" id="chart-empty" style="display:none;">Nenhuma pergunta registrada ainda.</p>
+          </div>
+        </div>
+
+        <!-- Uso de IA -->
+        <div class="analytics-ai-wrap">
+          <h3 class="analytics-subtitle">🤖 Uso de IA por Provedor</h3>
+          <div id="llm-usage-chart" class="llm-usage-grid">
+            <p class="empty-text">Nenhum dado disponível.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-grid analytics-grid-3">
+        <!-- Top manuais -->
+        <div class="analytics-panel">
+          <h3 class="analytics-subtitle">🏆 Manuais Mais Consultados</h3>
+          <div id="top-manuals-list" class="analytics-ranking">
+            <p class="empty-text">Nenhum dado disponível.</p>
+          </div>
+        </div>
+
+        <!-- Top usuários -->
+        <div class="analytics-panel">
+          <h3 class="analytics-subtitle">👑 Usuários Mais Ativos</h3>
+          <div id="top-users-list" class="analytics-ranking">
+            <p class="empty-text">Nenhum dado disponível.</p>
+          </div>
+        </div>
+
+        <!-- Perguntas recentes -->
+        <div class="analytics-panel analytics-panel-wide">
+          <h3 class="analytics-subtitle">💬 Perguntas Recentes</h3>
+          <div id="recent-questions-list" class="recent-questions-wrap">
+            <p class="empty-text">Nenhuma pergunta registrada.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- SEÇÃO: PLANOS DE ASSINATURA -->
     <section class="admin-card">
@@ -168,7 +232,7 @@
   </div>
 </div>
 
-<script src="/static/admin.js?v=9"></script>
+<script src="/static/admin.js?v=10"></script>
 </body>
 </html>
 
