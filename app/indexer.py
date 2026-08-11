@@ -8,9 +8,17 @@ import ftfy
 from . import db
 
 def detect_language(sample_text: str) -> str:
-    pt = len(re.findall(r"\b(de|para|com|nao|não|remova|instale|verifique|aperto)\b", sample_text, re.I))
-    en = len(re.findall(r"\b(the|remove|install|check|torque|with|and)\b", sample_text, re.I))
-    return "pt" if pt >= en else "en"
+    pt = len(re.findall(r"\b(de|para|com|não|remova|instale|verifique|aperto|parafuso|óleo|motor|freio)\b", sample_text, re.I))
+    en = len(re.findall(r"\b(the|remove|install|check|torque|with|and|engine|brake|oil|bolt)\b", sample_text, re.I))
+    de = len(re.findall(r"\b(der|die|das|und|ein|eine|des|dem|den|mit|von|für|wird|werden|ist|sind|nach|beim|beim|Schraube|Motor|Öl|Bremse|Anzugsmoment|Ausbau|Einbau|Wartung|Prüfung)\b", sample_text, re.I))
+    best = max(pt, en, de)
+    if best == 0:
+        return "pt"
+    if de == best:
+        return "de"
+    if en == best:
+        return "en"
+    return "pt"
 
 
 def generate_manual_id(brand: str, model: str, year: str) -> str:

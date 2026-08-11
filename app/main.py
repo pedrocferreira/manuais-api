@@ -40,20 +40,19 @@ app.add_middleware(
 
 db.ensure_users_table()
 
-# Garante a existencia do usuario admin padrao (admin / admin)
+# Garante a existencia do usuario admin padrao (apenas se nao existir)
+# NUNCA reseta a senha de um admin ja existente
 con = db.get_con()
 _admin_row = con.execute("SELECT id FROM users WHERE username = 'admin'").fetchone()
-_admin_hash = auth.hash_password("admin")
 if not _admin_row:
+    _admin_hash = auth.hash_password("admin")
     con.execute(
         "INSERT INTO users (username, password_hash, is_admin) VALUES ('admin', ?, 1)",
         (_admin_hash,),
     )
 else:
-    con.execute(
-        "UPDATE users SET password_hash = ?, is_admin = 1 WHERE username = 'admin'",
-        (_admin_hash,),
-    )
+    # Apenas garante que is_admin=1, sem tocar na senha
+    con.execute("UPDATE users SET is_admin = 1 WHERE username = 'admin'")
 con.commit()
 con.close()
 

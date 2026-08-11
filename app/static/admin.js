@@ -469,6 +469,19 @@ async function handleUpload(e) {
   const file = el.fileInput.files[0];
   if (!file) return;
 
+  // Validações antes de enviar
+  if (!file.name.toLowerCase().endsWith(".pdf")) {
+    el.uploadStatus.className = "form-status error";
+    el.uploadStatus.textContent = "❌ Apenas arquivos PDF são permitidos.";
+    return;
+  }
+  const maxSizeMB = 200;
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    el.uploadStatus.className = "form-status error";
+    el.uploadStatus.textContent = `❌ O arquivo excede o limite de ${maxSizeMB}MB.`;
+    return;
+  }
+
   const formData = new FormData();
   formData.append("brand", el.brandInput.value.trim());
   formData.append("model", el.modelInput.value.trim());
@@ -476,22 +489,63 @@ async function handleUpload(e) {
   formData.append("file", file);
 
   el.btnUpload.disabled = true;
+
+  // Mensagens de progresso animadas
+  const progressMessages = [
+    `⬆️ Enviando PDF (${(file.size / 1024 / 1024).toFixed(1)} MB)...`,
+    "⚙️ Processando páginas do PDF...",
+    "🔍 Extraindo texto e indexando...",
+    "📚 Quase pronto, salvando no acervo...",
+  ];
+  let msgIdx = 0;
   el.uploadStatus.className = "form-status loading";
-  el.uploadStatus.textContent = "Processando e indexando PDF (isso pode levar alguns segundos)...";
+  el.uploadStatus.textContent = progressMessages[0];
+  const progressInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % progressMessages.length;
+    el.uploadStatus.textContent = progressMessages[msgIdx];
+  }, 4000);
 
   try {
-    const res = await api("/api/admin/manuals", {
+    // Timeout de 5 minutos para PDFs grandes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+    const res = await fetch("/api/admin/manuals", {
       method: "POST",
+      credentials: "same-origin",
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
+
+    if (res.status === 401) { window.location.href = "/login"; return; }
+    if (res.status === 403) { alert("Acesso negado."); return; }
+
     const data = await res.json();
-    el.uploadStatus.className = "form-status success";
-    el.uploadStatus.textContent = data.message || "Manual cadastrado e indexado com sucesso!";
+
+    if (!res.ok) {
+      throw new Error(data.detail || `Erro HTTP ${res.status}`);
+    }
+
+    clearInterval(progressInterval);
+    const indexed = data.manual?.indexed;
+    const pages = data.manual?.pages || "?";
+    const statusMsg = indexed
+      ? `✅ Manual cadastrado e indexado com sucesso! (${pages} páginas pesquisáveis)`
+      : `⚠️ Manual cadastrado (${pages} páginas), mas o PDF parece ser escaneado — busca não disponível até OCR.`;
+
+    el.uploadStatus.className = `form-status ${indexed ? "success" : "loading"}`;
+    el.uploadStatus.textContent = statusMsg;
     el.uploadForm.reset();
     await loadCatalog();
   } catch (err) {
+    clearInterval(progressInterval);
     el.uploadStatus.className = "form-status error";
-    el.uploadStatus.textContent = "Erro ao enviar manual: " + err.message;
+    if (err.name === "AbortError") {
+      el.uploadStatus.textContent = "⏱️ Tempo esgotado (timeout de 5 minutos). O servidor pode ainda estar processando — verifique o acervo em alguns instantes.";
+    } else {
+      el.uploadStatus.textContent = "❌ Erro ao enviar manual: " + err.message;
+    }
   } finally {
     el.btnUpload.disabled = false;
   }

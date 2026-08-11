@@ -76,9 +76,23 @@ def _is_quota_error(exc: Exception) -> bool:
 
 def _build_system_prompt(manual: dict) -> str:
     mid = manual["id"]
+    lang = manual.get("language") or "pt"
+    lang_note = ""
+    if lang != "pt":
+        lang_names = {"en": "inglês", "de": "alemão", "es": "espanhol", "fr": "francês", "it": "italiano"}
+        lang_display = lang_names.get(lang, lang)
+        lang_note = (
+            f"IMPORTANTE: As paginas do manual estao escritas em {lang_display}. "
+            "Leia o conteudo no idioma original, extraia as informacoes tecnicas "
+            "(valores numericos, torques, folgas, capacidades, procedimentos) e responda EXCLUSIVAMENTE em portugues do Brasil. "
+            f"TRADUZA todos os nomes de pecas e componentes do {lang_display} para o portugues. "
+            "Exemplo: 'Zylinderkopfschraube' -> 'parafuso de cabeca do cilindro', 'Oldruckschalter' -> 'sensor de pressao do oleo'. "
+            "Nunca deixe termos no idioma original na resposta.\n\n"
+        )
     return (
         "Voce e um assistente tecnico especialista para mecanicos de motocicletas. "
         "Responda SEMPRE em portugues do Brasil, usando EXCLUSIVAMENTE as paginas do manual fornecidas.\n\n"
+        + lang_note +
         "ESTRUTURA OBRIGATORIA DA RESPOSTA:\n\n"
         "1. RESPOSTA DIRETA (primeira linha, sem titulo)\n"
         "   - Uma unica frase com o valor principal em **negrito**.\n"
@@ -121,11 +135,41 @@ def _build_user_message(manual: dict, question: str, context_blocks: list[str]) 
     )
 
 
-# --- Expander de termos de busca -----------------------------------------
+# --- Expander e tradutor de termos de busca -----------------------------------------
+
+_LANG_NAMES = {
+    "pt": "portugues",
+    "en": "ingles",
+    "de": "alemao",
+    "es": "espanhol",
+    "fr": "frances",
+    "it": "italiano",
+}
+
+
+def _llm_call(prompt: str, max_tokens: int = 256) -> str:
+    """Chama o LLM disponivel e retorna o texto da resposta. Falha silenciosamente."""
+    try:
+        if (LLM_PROVIDER in ("groq", "auto")) and _has_groq():
+            client = _groq_client()
+            resp = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+            )
+            return (resp.choices[0].message.content or "").strip()
+        elif _has_gemini():
+            client = _gemini_client()
+            resp = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+            return (resp.text or "").strip()
+    except Exception:
+        pass
+    return ""
+
 
 def _expand_terms_with_llm(question: str, language: str | None) -> list[str]:
     """Pede ao LLM termos de busca adicionais. Falha silenciosamente."""
-    lang_name = "portugues" if language == "pt" else "ingles"
+    lang_name = _LANG_NAMES.get(language or "pt", "portugues")
     prompt = (
         "Voce gera termos de busca para localizar paginas em um manual de servico "
         f"de motocicleta escrito em {lang_name}. Pergunta do mecanico: \"{question}\"\n"
@@ -133,21 +177,9 @@ def _expand_terms_with_llm(question: str, language: str | None) -> list[str]:
         "(pecas, procedimentos, especificacoes). Sem explicacoes."
     )
     try:
-        if (LLM_PROVIDER in ("groq", "auto")) and _has_groq():
-            client = _groq_client()
-            resp = client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=256,
-            )
-            text = (resp.choices[0].message.content or "").strip()
-        elif _has_gemini():
-            client = _gemini_client()
-            resp = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-            text = (resp.text or "").strip()
-        else:
+        text = _llm_call(prompt, max_tokens=256)
+        if not text:
             return []
-
         start, end = text.index("["), text.rindex("]") + 1
         terms = json.loads(text[start:end])
         return [str(t) for t in terms if isinstance(t, str)]
@@ -155,15 +187,63 @@ def _expand_terms_with_llm(question: str, language: str | None) -> list[str]:
         return []
 
 
+def _translate_terms(terms: list[str], target_language: str) -> list[str]:
+    """Traduz termos de busca do portugues para o idioma do manual. Falha silenciosamente."""
+    if not terms:
+        return []
+    lang_name = _LANG_NAMES.get(target_language, target_language)
+    terms_str = ", ".join(terms)
+    prompt = (
+        f"Traduza estes termos tecnicos de motocicleta do portugues para o {lang_name}. "
+        f"Termos: [{terms_str}]\n"
+        f"Responda SOMENTE com um array JSON de strings em {lang_name}, "
+        "mantendo a mesma quantidade de termos. Sem explicacoes."
+    )
+    try:
+        text = _llm_call(prompt, max_tokens=256)
+        if not text:
+            return []
+        start, end = text.index("["), text.rindex("]") + 1
+        translated = json.loads(text[start:end])
+        return [str(t) for t in translated if isinstance(t, str)]
+    except Exception:
+        logger.warning("Falha ao traduzir termos para '%s', usando termos originais.", target_language)
+        return []
+
+
 # --- Busca de paginas relevantes -----------------------------------------
 
 def retrieve(con: sqlite3.Connection, manual_id: str, question: str,
              language: str | None, use_llm: bool) -> tuple[list[dict], list[str]]:
-    terms = search.extract_terms(question)
-    if use_llm:
-        terms = list(dict.fromkeys(terms + _expand_terms_with_llm(question, language)))
-    results = search.search_pages(con, manual_id, search.build_fts_query(terms), MAX_CONTEXT_PAGES)
-    return results, terms
+    """Busca paginas relevantes. Se o manual nao for em PT, traduz os termos de busca."""
+    terms_pt = search.extract_terms(question)
+
+    # Determina os termos de busca no idioma do manual
+    manual_lang = language or "pt"
+    if manual_lang != "pt" and use_llm:
+        # Traduz os termos para o idioma do manual + expande com sinonimos
+        terms_translated = _translate_terms(terms_pt, manual_lang)
+        expanded = _expand_terms_with_llm(question, manual_lang)
+        terms_search = list(dict.fromkeys(terms_translated + expanded))
+        logger.info("Termos traduzidos (%s): %s", manual_lang, terms_search)
+    elif use_llm:
+        terms_search = list(dict.fromkeys(terms_pt + _expand_terms_with_llm(question, manual_lang)))
+    else:
+        terms_search = terms_pt
+
+    # Busca com termos no idioma do manual
+    results = search.search_pages(con, manual_id, search.build_fts_query(terms_search), MAX_CONTEXT_PAGES)
+
+    # Fallback: se nao achou nada e o idioma nao é PT, tenta tambem com termos originais em PT
+    if not results and manual_lang != "pt" and terms_pt != terms_search:
+        logger.info("Fallback: buscando com termos originais em PT: %s", terms_pt)
+        results = search.search_pages(con, manual_id, search.build_fts_query(terms_pt), MAX_CONTEXT_PAGES)
+        if results:
+            terms_search = terms_pt
+
+    # Retorna termos traduzidos (para highlight) junto com os originais em PT
+    all_terms = list(dict.fromkeys(terms_pt + terms_search))
+    return results, all_terms
 
 
 # --- Geracao de resposta com Groq ----------------------------------------
