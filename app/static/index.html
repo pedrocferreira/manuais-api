@@ -4,11 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Consulte o acervo completo de manuais de serviço técnicos para motos." />
-  <title>Manuais de Serviço — Motos</title>
+  <link rel="icon" href="/static/img/xtreme-logo.png" />
+  <title>Xtreme Manuais AI — consulta de manuais de serviço</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css?v=12" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=14" />
 </head>
 
 <body>
@@ -24,10 +25,11 @@
           <line x1="2" y1="13" x2="16" y2="13"/>
         </svg>
       </button>
-      <div class="brand">
-        <div class="brand-icon">🔧</div>
-        <span class="brand-text">Manuais</span>
-      </div>
+      <a href="/" class="brand" aria-label="Xtreme Mototech — Manuais AI">
+        <img class="brand-logo" src="/static/img/xtreme-logo-light.png" alt="Xtreme Mototech" width="499" height="108" />
+        <span class="brand-div"></span>
+        <span class="brand-text">Manuais <b>AI</b></span>
+      </a>
       <div class="topbar-breadcrumb" id="topbar-breadcrumb" style="display:none;">
         <span class="sep">/</span>
         <span class="crumb-active" id="breadcrumb-manual"></span>
@@ -179,7 +181,10 @@
   </div>
 </div>
 
+<!-- ── Print Report Container (Hidden on screen, active on print) ── -->
+<div id="print-area" class="print-area" aria-hidden="true"></div>
+
 <script src="/static/marked.min.js"></script>
-<script src="/static/app.js?v=12"></script>
+<script src="/static/app.js?v=15"></script>
 </body>
 </html>

@@ -665,7 +665,7 @@ function renderBarChart(dayData) {
 
     // Gradient
     const grad = ctx.createLinearGradient(x, y, x, padT + chartH);
-    grad.addColorStop(0, "#ff7a1a");
+    grad.addColorStop(0, "#e21c1f");
     grad.addColorStop(1, "#e65c00");
     ctx.fillStyle = d.count > 0 ? grad : "rgba(255,255,255,0.04)";
 

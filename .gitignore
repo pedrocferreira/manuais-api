@@ -5,3 +5,10 @@ data/.secret_key
 data/index.db
 data/page_cache/
 data/page_cache/**  
+# Lotes de manuais para importar: RARs e PDFs extraidos nao vao pro git
+manuaisNew/
+data/incoming/
+# PDFs dos manuais: ficam no volume data/, nao no git (sao GBs)
+data/manuals/
+# Backups gerados pelo deploy
+backups/

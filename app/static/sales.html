@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manuais API - Acesso Exclusivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #00e5ff;
+            --primary-hover: #00b3cc;
+            --secondary: #7b2cbf;
+            --text-main: #ffffff;
+            --text-muted: #8b949e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Background glow effects */
+        .glow-1, .glow-2 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.4;
+            animation: float 10s infinite alternate ease-in-out;
+        }
+
+        .glow-1 {
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+        }
+
+        .glow-2 {
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            bottom: -200px;
+            right: -200px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px 40px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            letter-spacing: -1.5px;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .pricing-container {
+            display: flex;
+            gap: 40px;
+            padding: 40px 20px 100px;
+            max-width: 1000px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: background 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card.premium::before {
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: baseline;
+        }
+
+        .price span {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-left: 8px;
+        }
+
+        .description {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .features {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+
+        .features li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #d1d5db;
+        }
+
+        .features li svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border: none;
+            box-shadow: 0 10px 20px rgba(0, 229, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #8c36db, #00f0ff);
+            box-shadow: 0 15px 30px rgba(0, 229, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .pricing-container { flex-direction: column; align-items: center; }
+            .card { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+
+    <header>
+        <h1>Manuais API</h1>
+        <p>Acesse o maior acervo técnico de motocicletas. Respostas precisas com IA apontando diretamente para as páginas do manual original.</p>
+    </header>
+
+    <div class="pricing-container">
+        <!-- Plano Proprietário -->
+        <div class="card">
+            <h2>Proprietário</h2>
+            <div class="price">R$ 15,90<span>/único</span></div>
+            <p class="description">Ideal para donos de moto que precisam consultar informações técnicas da sua própria motocicleta.</p>
+            
+            <ul class="features">
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Acesso a 1 manual específico
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Busca inteligente com IA
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Acesso vitalício ao manual escolhido
+                </li>
+            </ul>
+
+            <a href="/login" class="btn">Assinar Proprietário</a>
+        </div>
+
+        <!-- Plano Mecânico -->
+        <div class="card premium">
+            <h2>Mecânico</h2>
+            <div class="price">R$ 69,90<span>/mês</span></div>
+            <p class="description">Acesso completo para oficinas e mecânicos profissionais. Todos os manuais na palma da mão.</p>
+            
+            <ul class="features">
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Acesso a TODOS os manuais
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Busca ilimitada em todo o acervo
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Atualizações frequentes de modelos
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Suporte prioritário
+                </li>
+            </ul>
+
+            <a href="/login" class="btn btn-primary">Assinar Mecânico</a>
+        </div>
+    </div>
+</body>
+</html>

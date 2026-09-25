@@ -1,6 +1,7 @@
 /* ============================================================
-   MANUAIS DE SERVIÇO — Design System v12
-   Mobile-first, glassmorphism, micro-animations
+   XTREME MANUAIS AI — Design System v14
+   Mesma linguagem da landing page: grafite, vermelho da marca,
+   cantos retos e tipografia condensada industrial.
    ============================================================ */
 
 /* ── 1. Design Tokens ──────────────────────────────────────── */
@@ -8,28 +9,29 @@
   color-scheme: dark;
 
   /* Colors */
-  --bg:             #080a11;
-  --bg-2:           #0d1018;
-  --bg-gradient:    radial-gradient(ellipse 80% 60% at 60% 0%, #1a1040 0%, #0b0d18 55%, #080a11 100%);
-  --panel:          rgba(18, 22, 34, 0.7);
-  --panel-2:        rgba(26, 31, 47, 0.85);
-  --panel-solid:    #121622;
-  --border:         rgba(255, 255, 255, 0.07);
-  --border-hover:   rgba(255, 255, 255, 0.14);
-  --border-accent:  rgba(255, 122, 26, 0.35);
+  --bg:             #0c0d10;
+  --bg-2:           #111318;
+  --bg-gradient:    radial-gradient(ellipse 70% 50% at 70% -5%, rgba(226,28,31,0.13) 0%, rgba(12,13,16,0) 60%);
+  --panel:          rgba(19, 22, 28, 0.72);
+  --panel-2:        rgba(23, 26, 33, 0.9);
+  --panel-solid:    #13161c;
+  --border:         rgba(255, 255, 255, 0.09);
+  --border-hover:   rgba(255, 255, 255, 0.16);
+  --border-accent:  rgba(226, 28, 31, 0.4);
 
   /* Text */
-  --text:           #eef0f6;
-  --text-dim:       #8892a8;
-  --text-muted:     #4d5568;
+  --text:           #eef0f4;
+  --text-dim:       #858d9b;
+  --text-muted:     #5d6470;
 
-  /* Accent — orange fire */
-  --accent:         #ff7c1f;
-  --accent-2:       #e85d00;
-  --accent-hover:   #ff9347;
-  --accent-gradient: linear-gradient(135deg, #ff8c32 0%, #e05800 100%);
-  --accent-dim:     rgba(255, 124, 31, 0.12);
-  --accent-glow:    0 0 24px rgba(255, 124, 31, 0.25);
+  /* Accent — vermelho Xtreme */
+  --accent:         #e21c1f;
+  --accent-2:       #8e1114;
+  --accent-hover:   #ff3a34;
+  --accent-gradient: linear-gradient(135deg, #e21c1f 0%, #8e1114 100%);
+  --accent-dim:     rgba(226, 28, 31, 0.12);
+  --accent-glow:    0 0 20px rgba(226, 28, 31, 0.22);
+  --mark:           #ffd933;   /* amarelo do destaque no PDF */
 
   /* Status */
   --ok:             #34d399;
@@ -46,19 +48,23 @@
   --space-4: 16px;  --space-5: 20px;   --space-6: 24px;
   --space-8: 32px;  --space-10: 40px;  --space-12: 48px;
 
-  /* Radii */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
-  --radius-xl:  20px;
-  --radius-2xl: 28px;
+  /* Radii — cantos retos, como na landing */
+  --radius-sm:  3px;
+  --radius-md:  4px;
+  --radius-lg:  6px;
+  --radius-xl:  8px;
+  --radius-2xl: 10px;
 
   /* Shadows */
-  --shadow-sm:  0 2px 8px rgba(0,0,0,0.3);
-  --shadow-md:  0 8px 24px rgba(0,0,0,0.45);
-  --shadow-lg:  0 16px 48px rgba(0,0,0,0.55);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.35);
+  --shadow-md:  0 10px 28px rgba(0,0,0,0.5);
+  --shadow-lg:  0 24px 60px -24px rgba(0,0,0,0.85);
 
   /* Typography */
+  --font-body:    'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
   --font-xs:   0.72rem;
   --font-sm:   0.84rem;
   --font-base: 0.96rem;
@@ -85,7 +91,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Outfit', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   background-image: var(--bg-gradient);
   background-attachment: fixed;
@@ -101,6 +107,24 @@ a { color: var(--accent); text-decoration: none; transition: color var(--t-fast)
 a:hover { color: var(--accent-hover); }
 
 img { display: block; max-width: 100%; }
+
+::selection { background: var(--accent); color: #fff; }
+
+/* Títulos e rótulos na condensada industrial da landing page */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+/* Números técnicos (torque, página, preço) na monoespaçada */
+.mono, .page-tag, .ref-card .page-tag, kbd, code {
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -125,8 +149,8 @@ img { display: block; max-width: 100%; }
   50% { opacity: 0.45; }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,124,31,0.5); }
-  50%      { box-shadow: 0 0 0 8px rgba(255,124,31,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226, 28, 31,0.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(226, 28, 31,0); }
 }
 @keyframes pulse-red {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
@@ -175,7 +199,7 @@ img { display: block; max-width: 100%; }
 .spinner {
   display: inline-block;
   width: 16px; height: 16px;
-  border: 2px solid rgba(255,124,31,0.25);
+  border: 2px solid rgba(226, 28, 31,0.25);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
@@ -189,7 +213,7 @@ img { display: block; max-width: 100%; }
 .badge {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 10px;
-  border-radius: 99px;
+  border-radius: var(--radius-sm);
   font-size: var(--font-xs); font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -230,22 +254,24 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Primary */
 .btn-primary, button.primary {
-  background: var(--accent-gradient);
+  background: var(--accent);
   color: #fff;
   padding: 11px 22px;
-  font-size: var(--font-sm);
-  box-shadow: 0 4px 16px rgba(255,124,31,0.28);
+  font-family: var(--font-display);
+  font-size: 1rem; font-weight: 600;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  box-shadow: 0 8px 22px -12px rgba(226, 28, 31, 0.95);
   border-radius: var(--radius-md);
 }
 .btn-primary:hover:not(:disabled), button.primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255,124,31,0.38);
-  filter: brightness(1.08);
+  background: var(--accent-hover);
+  box-shadow: 0 14px 28px -12px rgba(226, 28, 31, 0.95);
 }
 .btn-primary:active:not(:disabled), button.primary:active:not(:disabled) {
   transform: translateY(0); box-shadow: none;
 }
-button.primary { width: 100%; justify-content: center; margin-top: var(--space-8); padding: 13px; font-size: var(--font-base); }
+button.primary { width: 100%; justify-content: center; margin-top: var(--space-8); padding: 13px; font-size: 1.06rem; }
 
 /* Secondary */
 .btn-secondary {
@@ -281,7 +307,7 @@ button.primary { width: 100%; justify-content: center; margin-top: var(--space-8
 .btn-icon {
   background: transparent; border: 1px solid var(--border);
   color: var(--text-dim); width: 38px; height: 38px;
-  border-radius: 50%; padding: 0;
+  border-radius: var(--radius-md); padding: 0;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -318,7 +344,7 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255,124,31,0.18);
+  box-shadow: 0 0 0 3px rgba(226, 28, 31,0.18);
   background: rgba(0,0,0,0.38);
 }
 input[type="file"] {
@@ -403,57 +429,75 @@ input[type="file"] {
   position: relative; overflow: hidden;
 }
 
-/* Ambient orbs */
-.login-bg::before, .login-bg::after {
+/* Brilho vermelho + grade técnica, igual à landing page */
+.login-bg::before {
   content: '';
   position: absolute; border-radius: 50%;
-  pointer-events: none; filter: blur(80px); opacity: 0.18;
-}
-.login-bg::before {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, #ff7c1f, transparent 70%);
-  top: -120px; right: -80px;
-  animation: orb 12s ease-in-out infinite;
+  pointer-events: none; filter: blur(60px); opacity: 0.22;
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, #e21c1f, transparent 68%);
+  top: -160px; right: -120px;
+  animation: orb 14s ease-in-out infinite;
 }
 .login-bg::after {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, #6d28d9, transparent 70%);
-  bottom: -80px; left: -60px;
-  animation: orb 16s ease-in-out infinite reverse;
+  content: '';
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 8%, transparent 70%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 8%, transparent 70%);
 }
 
 .login-card {
-  position: relative; z-index: 1;
+  position: relative; z-index: 1; overflow: hidden;
   width: 100%; max-width: 400px;
-  background: var(--panel);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--panel-solid);
   border: 1px solid var(--border-hover);
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-lg);
   padding: var(--space-10);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.04);
-  animation: scaleIn 0.5s var(--ease-spring);
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.4s var(--ease);
 }
+/* hairline vermelha no topo do cartão, como nos blocos da landing */
+.login-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent);
+}
+
+/* Assinatura da Xtreme no topo do cartão */
+.login-brand {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding-bottom: var(--space-5); margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+.login-brand img { height: 22px; width: auto; }
+.login-brand span {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 0.98rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.login-brand span b { color: var(--accent-hover); font-weight: 600; }
 
 .login-logo {
   display: flex; align-items: center; gap: var(--space-3);
   margin-bottom: var(--space-2);
 }
 .login-logo-icon {
-  width: 42px; height: 42px;
-  background: var(--accent-gradient);
-  border-radius: var(--radius-md);
+  width: 38px; height: 38px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem;
-  box-shadow: var(--accent-glow);
+  color: var(--accent-hover);
+  flex-shrink: 0;
 }
+.login-logo-icon svg { width: 19px; height: 19px; }
 .login-logo h1 {
-  font-size: var(--font-xl); font-weight: 700;
-  background: var(--accent-gradient);
-  background-size: 200% 200%;
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradientShift 4s ease infinite;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 1.75rem; text-transform: uppercase; letter-spacing: 0.01em;
+  color: var(--text);
 }
 .login-subtitle {
   color: var(--text-dim); font-size: var(--font-sm);
@@ -470,7 +514,8 @@ input[type="file"] {
 .auth-tab {
   flex: 1; background: transparent; color: var(--text-dim);
   padding: 9px 12px; border-radius: var(--radius-sm);
-  font-size: var(--font-sm); font-weight: 600;
+  font-family: var(--font-display); font-size: 1rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
   transition: all var(--t-base) var(--ease);
   border: none; cursor: pointer;
 }
@@ -514,9 +559,7 @@ input[type="file"] {
 .plan-card-price {
   font-size: var(--font-md); font-weight: 700;
   color: var(--accent);
-  background: var(--accent-gradient);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--font-mono); letter-spacing: -0.02em;
 }
 .plan-card-desc { font-size: var(--font-xs); color: var(--text-dim); margin-top: 4px; }
 
@@ -528,7 +571,7 @@ input[type="file"] {
   font-size: var(--font-xs); color: var(--text-dim); line-height: 1.6;
 }
 .admin-hint code {
-  color: var(--accent); background: rgba(255,124,31,0.15);
+  color: var(--accent); background: rgba(226, 28, 31,0.15);
   padding: 1px 6px; border-radius: var(--radius-sm);
 }
 
@@ -560,22 +603,18 @@ input[type="file"] {
 }
 
 .brand {
-  display: flex; align-items: center; gap: var(--space-2);
-  font-size: var(--font-md); font-weight: 700; white-space: nowrap;
+  display: flex; align-items: center; gap: var(--space-3);
+  white-space: nowrap; color: var(--text);
 }
-.brand-icon {
-  width: 30px; height: 30px;
-  background: var(--accent-gradient);
-  border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.9rem; flex-shrink: 0;
-  box-shadow: var(--accent-glow);
-}
+.brand:hover { color: var(--text); }
+.brand-logo { height: 19px; width: auto; flex-shrink: 0; }
+.brand-div  { width: 1px; height: 18px; background: var(--border-hover); flex-shrink: 0; }
 .brand-text {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text);
 }
+.brand-text b { color: var(--accent-hover); font-weight: 600; }
 
 /* Breadcrumb */
 .topbar-breadcrumb {
@@ -611,14 +650,14 @@ input[type="file"] {
   display: flex; align-items: center; gap: var(--space-2);
   padding: 6px 14px 6px 10px;
   background: var(--panel-2); border: 1px solid var(--border);
-  border-radius: 99px; cursor: pointer;
+  border-radius: var(--radius-md); cursor: pointer;
   font-size: var(--font-sm); font-weight: 500;
   transition: all var(--t-base) var(--ease);
 }
 .user-chip:hover { background: rgba(255,255,255,0.1); border-color: var(--border-hover); }
 .user-avatar {
   width: 26px; height: 26px;
-  background: var(--accent-gradient);
+  background: var(--accent);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: var(--font-xs); font-weight: 700; color: #fff;
@@ -775,8 +814,10 @@ main.content {
 }
 .tabs button {
   background: transparent; color: var(--text-dim);
-  padding: 8px 18px; font-size: var(--font-sm);
-  border-radius: var(--radius-sm); font-weight: 500;
+  padding: 8px 20px;
+  font-family: var(--font-display); font-size: 0.98rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border-radius: var(--radius-sm);
   transition: all var(--t-base) var(--ease);
   border: none;
 }
@@ -800,7 +841,7 @@ main.content {
 }
 .ask-input-bar:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255,124,31,0.14), var(--shadow-sm);
+  box-shadow: 0 0 0 3px rgba(226, 28, 31,0.14), var(--shadow-sm);
 }
 .ask-input-bar.is-listening {
   border-color: #ef4444;
@@ -819,7 +860,7 @@ main.content {
 
 /* Mic button */
 .btn-mic {
-  width: 38px; height: 38px; border-radius: 50%;
+  width: 38px; height: 38px; border-radius: var(--radius-md);
   border: 1.5px solid var(--border);
   background: transparent; color: var(--text-dim);
   display: flex; align-items: center; justify-content: center;
@@ -836,13 +877,13 @@ main.content {
 
 /* Send button */
 .btn-send {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: var(--accent-gradient); color: #fff;
+  width: 38px; height: 38px; border-radius: var(--radius-md);
+  background: var(--accent); color: #fff;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; box-shadow: 0 2px 10px rgba(255,124,31,0.35);
+  flex-shrink: 0; box-shadow: 0 2px 10px rgba(226, 28, 31,0.35);
   transition: all var(--t-base) var(--ease);
 }
-.btn-send:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 16px rgba(255,124,31,0.45); }
+.btn-send:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 16px rgba(226, 28, 31,0.45); }
 .btn-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Voice status */
@@ -892,7 +933,7 @@ main.content {
 .answer-box::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--accent-gradient);
+  background: var(--accent);
 }
 .answer-box.md { white-space: normal; }
 .answer-box.md > :first-child { margin-top: 0; }
@@ -902,13 +943,14 @@ main.content {
   font-size: var(--font-md); font-weight: 500; line-height: 1.65;
   margin: 0 0 var(--space-5);
   padding: var(--space-4) var(--space-5);
-  background: rgba(255,124,31,0.06);
+  background: rgba(226, 28, 31,0.06);
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 .answer-box.md h1, .answer-box.md h2, .answer-box.md h3, .answer-box.md h4 {
-  font-size: var(--font-xs); font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.1em;
+  font-family: var(--font-display);
+  font-size: 0.95rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.16em;
   color: var(--text-dim); margin: var(--space-6) 0 var(--space-3);
   border-bottom: 1px solid var(--border); padding-bottom: var(--space-2);
 }
@@ -930,7 +972,7 @@ main.content {
 .answer-box.md th:last-child, .answer-box.md td:last-child { border-right: none; }
 .answer-box.md tr:last-child td { border-bottom: none; }
 .answer-box.md th { background: rgba(255,255,255,0.04); color: #fff; font-weight: 600; }
-.answer-box.md tr:hover td { background: rgba(255,124,31,0.04); }
+.answer-box.md tr:hover td { background: rgba(226, 28, 31,0.04); }
 .answer-box.md blockquote {
   margin: var(--space-4) 0; padding: var(--space-3) var(--space-4);
   border-left: 3px solid var(--warn);
@@ -951,7 +993,7 @@ a.pdf-link {
   padding: 2px 8px; font-size: 0.82em; font-weight: 600;
   margin: 0 3px; transition: all var(--t-fast) var(--ease);
 }
-a.pdf-link:hover { background: rgba(255,124,31,0.22); border-color: rgba(255,124,31,0.55); }
+a.pdf-link:hover { background: rgba(226, 28, 31,0.22); border-color: rgba(226, 28, 31,0.55); }
 a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
 
 /* ── 18. References ─────────────────────────────────────────── */
@@ -966,7 +1008,7 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
   transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease), border-color var(--t-base) var(--ease);
 }
 .ref-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--border-hover); }
-.ref-card.cited { border-color: var(--border-accent); background: rgba(255,124,31,0.02); }
+.ref-card.cited { border-color: var(--border-accent); background: rgba(226, 28, 31,0.02); }
 
 .ref-thumb {
   flex: 0 0 110px; cursor: zoom-in;
@@ -1019,7 +1061,8 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 3px;
   background: transparent; border: none; color: var(--text-muted);
-  font-size: 0.68rem; font-weight: 500; padding: 8px 4px;
+  font-family: var(--font-display); font-size: 0.82rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 4px;
   border-radius: var(--radius-md); cursor: pointer;
   transition: all var(--t-base) var(--ease); min-height: 54px;
 }
@@ -1137,14 +1180,12 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
 
 .stat-card-accent {
   border-color: var(--border-accent);
-  background: linear-gradient(135deg, rgba(255,124,31,0.07) 0%, var(--panel) 100%);
+  background: linear-gradient(135deg, rgba(226, 28, 31,0.07) 0%, var(--panel) 100%);
 }
 .stat-title { font-size: var(--font-xs); color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
 .stat-card-accent .stat-value {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--font-mono); letter-spacing: -0.02em;
 }
 
 /* Admin Cards */
@@ -1224,7 +1265,7 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
 .ranking-info { flex: 1; min-width: 0; }
 .ranking-name { font-size: var(--font-sm); font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ranking-bar-wrap { height: 4px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
-.ranking-bar-fill { height: 100%; border-radius: 99px; background: var(--accent-gradient); transition: width 0.8s var(--ease); }
+.ranking-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.8s var(--ease); }
 .ranking-count { font-size: var(--font-sm); font-weight: 700; color: var(--accent); flex-shrink: 0; min-width: 36px; text-align: right; }
 
 /* Recent Questions */
@@ -1277,9 +1318,7 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
 .plan-admin-name { font-weight: 700; font-size: var(--font-md); }
 .plan-admin-price {
   font-size: var(--font-lg); font-weight: 800; color: var(--accent);
-  background: var(--accent-gradient);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--font-mono); letter-spacing: -0.02em;
 }
 .plan-admin-desc { font-size: var(--font-sm); color: var(--text-dim); line-height: 1.5; }
 .plan-admin-actions { display: flex; gap: var(--space-2); margin-top: auto; }
@@ -1292,7 +1331,8 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
 @media (max-width: 768px) {
   /* Topbar */
   .topbar { padding: 0 var(--space-3); gap: var(--space-2); }
-  .brand-text { display: none; }
+  .brand-text, .brand-div { display: none; }   /* no celular fica só o logo */
+  .brand-logo { height: 17px; }
   .topbar-breadcrumb { display: none; }
   #username-label { display: none; }
   .btn-secondary .btn-text { display: none; }
@@ -1400,4 +1440,418 @@ a.pdf-link::after { content: "↗"; font-size: 1em; margin-left: 2px; }
   .admin-container { padding: var(--space-6) var(--space-4); }
   .analytics-grid { grid-template-columns: 1fr; }
   .analytics-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── 22. Answer Toolbar & Print Actions ──────────────────────── */
+.answer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  animation: fadeIn 0.3s var(--ease);
+}
+
+.answer-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.answer-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.btn-print-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(226, 28, 31, 0.3);
+  transition: all var(--t-fast) var(--ease);
+}
+.btn-print-main:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(226, 28, 31, 0.45);
+  background: linear-gradient(135deg, #ff3a34 0%, #c01417 100%);
+}
+.btn-print-main:active {
+  transform: translateY(0);
+}
+.btn-print-main.loading {
+  opacity: 0.8;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.btn-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+.btn-tool:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-hover);
+  color: #fff;
+}
+.btn-tool.copied {
+  background: var(--ok-dim);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.ref-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-print-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+.btn-print-page:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+/* ── 23. Print Styling & Report Layout ──────────────────────── */
+#print-area {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 15mm 15mm;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #111111 !important;
+    font-family: Arial, Helvetica, "Nimbus Sans L", sans-serif !important;
+    font-size: 10.5pt !important;
+    line-height: 1.45 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Hide entire interactive UI */
+  .app-shell,
+  .topbar,
+  .sidebar,
+  .sidebar-overlay,
+  .bottom-nav,
+  .tabs,
+  .ask-input-bar,
+  .modal-overlay,
+  .lightbox,
+  .answer-toolbar,
+  .btn-print-main,
+  .btn-tool,
+  .btn-print-page,
+  .notice,
+  .user-chip,
+  .logout,
+  #topbar,
+  #sidebar,
+  #content,
+  #bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Show only print area */
+  #print-area {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .print-document {
+    width: 100% !important;
+  }
+
+  /* Print Header */
+  .print-header {
+    border-bottom: 2px solid #111;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+
+  .print-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .print-brand {
+    font-size: 15pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #000;
+  }
+
+  .print-date {
+    font-size: 9pt;
+    color: #555;
+  }
+
+  .print-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    background: #f4f5f7;
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin-top: 6px;
+    font-size: 10pt;
+  }
+
+  .print-meta-item strong {
+    color: #000;
+  }
+
+  .print-question-box {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #fbfbfb;
+    border-left: 4px solid #e21c1f;
+    border-top: 1px solid #eee;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    font-size: 10.5pt;
+  }
+  .print-question-box strong {
+    display: block;
+    font-size: 9pt;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 2px;
+  }
+
+  /* Section Titles */
+  .print-section-title {
+    font-size: 12pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #000;
+    margin: 16px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #ccc;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Answer Section */
+  .print-answer {
+    margin-bottom: 20px;
+  }
+
+  .print-answer p.answer-lead {
+    font-size: 11pt;
+    font-weight: bold;
+    padding: 8px 12px;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #111;
+    margin-bottom: 12px;
+  }
+
+  .print-answer h1,
+  .print-answer h2,
+  .print-answer h3,
+  .print-answer h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #222;
+    margin: 14px 0 6px 0;
+    border-bottom: 1px dotted #ccc;
+    padding-bottom: 2px;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .print-answer p {
+    margin: 6px 0;
+    text-align: justify;
+  }
+
+  .print-answer ul,
+  .print-answer ol {
+    margin: 6px 0 10px 0;
+    padding-left: 22px;
+  }
+
+  .print-answer li {
+    margin-bottom: 4px;
+  }
+
+  .print-answer strong {
+    font-weight: 700;
+    color: #000;
+  }
+
+  /* Print Tables */
+  .print-answer table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 10px 0 14px 0 !important;
+    font-size: 9.5pt !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-answer th,
+  .print-answer td {
+    border: 1px solid #444 !important;
+    padding: 6px 8px !important;
+    text-align: left !important;
+    color: #000 !important;
+  }
+
+  .print-answer th {
+    background-color: #e8e8e8 !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-answer blockquote {
+    margin: 8px 0;
+    padding: 6px 12px;
+    border-left: 3px solid #666;
+    background: #f5f5f5;
+    font-style: italic;
+  }
+
+  .print-answer a.pdf-link {
+    color: #000 !important;
+    font-weight: bold;
+    text-decoration: underline;
+  }
+
+  /* PDF Page Attachment Section */
+  .print-pages-section {
+    width: 100%;
+  }
+
+  .print-page-item {
+    page-break-before: always;
+    break-before: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    padding-top: 10px;
+    text-align: center;
+  }
+
+  .print-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #777;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    font-size: 10pt;
+    font-weight: 700;
+    color: #000;
+  }
+
+  .print-page-img-wrap {
+    width: 100%;
+    text-align: center;
+  }
+
+  .print-page-img {
+    max-width: 100% !important;
+    width: auto !important;
+    max-height: 240mm !important;
+    object-fit: contain;
+    border: 1px solid #999;
+    box-shadow: none !important;
+    display: inline-block;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Print Footer */
+  .print-footer {
+    margin-top: 20px;
+    padding-top: 8px;
+    border-top: 1px solid #ccc;
+    font-size: 8pt;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+/* ── 24. Impressão: títulos voltam ao normal ─────────────────── */
+/* A condensada em caixa alta é da tela; no laudo impresso o texto
+   precisa ser sóbrio e legível na fonte do documento. */
+@media print {
+  h1, h2, h3, h4 {
+    font-family: Arial, Helvetica, "Nimbus Sans L", sans-serif !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+  }
 }

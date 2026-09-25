@@ -7,4 +7,3 @@ ftfy
 pyjwt
 python-dotenv
 python-multipart
-

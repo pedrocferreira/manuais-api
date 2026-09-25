@@ -1,6 +1,7 @@
 """Módulo auxiliar para processamento e indexação de manuais individuais."""
 import pathlib
 import re
+import unicodedata
 
 import fitz  # pymupdf
 import ftfy
@@ -22,9 +23,62 @@ def detect_language(sample_text: str) -> str:
 
 
 def generate_manual_id(brand: str, model: str, year: str) -> str:
-    raw = f"{brand}-{model}-{year}".lower()
+    # Tira o acento antes de limpar, senao "diagnóstico" vira "diagn-stico"
+    # e o id aparece assim na URL do PDF.
+    raw = unicodedata.normalize("NFKD", f"{brand}-{model}-{year}".lower())
+    raw = raw.encode("ascii", "ignore").decode()
     cleaned = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
     return cleaned or "manual-custom"
+
+
+# Grafia oficial de cada fabricante. A chave e' o nome sem acento, em minusculo
+# e sem pontuacao -- e' assim que o texto digitado no painel e' comparado.
+BRAND_ALIASES = {
+    "honda": "Honda",
+    "yamaha": "Yamaha",
+    "suzuki": "Suzuki",
+    "kawasaki": "Kawasaki",
+    "bmw": "BMW",
+    "ktm": "KTM",
+    "ducati": "Ducati",
+    "triumph": "Triumph",
+    "harleydavidson": "Harley-Davidson",
+    "harley": "Harley-Davidson",
+    "royalenfield": "Royal Enfield",
+    "bajaj": "Bajaj",
+    "dafra": "Dafra",
+    "shineray": "Shineray",
+    "haojue": "Haojue",
+    "traxx": "Traxx",
+    "voltz": "Voltz",
+    "aprilia": "Aprilia",
+    "husqvarna": "Husqvarna",
+    "mvagusta": "MV Agusta",
+    "motoguzzi": "Moto Guzzi",
+    "royalstar": "Royal Star",
+}
+
+
+def normalize_brand(brand: str) -> str:
+    """Devolve sempre a mesma grafia para a mesma marca.
+
+    Sem isso, "kawasaki", "Kawasaki" e "KAWASAKI" viram tres grupos diferentes
+    na lista de motos -- foi o que aconteceu com os manuais cadastrados pelo
+    painel admin.
+    """
+    limpo = " ".join((brand or "").split())
+    if not limpo:
+        return ""
+
+    chave = re.sub(r"[^a-z0-9]", "", limpo.lower())
+    if chave in BRAND_ALIASES:
+        return BRAND_ALIASES[chave]
+
+    # Marca desconhecida: Primeira Maiuscula, mas siglas curtas ficam em caixa alta
+    def _palavra(p: str) -> str:
+        return p.upper() if len(p) <= 3 and p.isalpha() else p.capitalize()
+
+    return " ".join(_palavra(p) for p in limpo.split())
 
 
 def index_manual_pdf(
@@ -35,6 +89,7 @@ def index_manual_pdf(
     custom_id: str | None = None,
 ) -> dict:
     """Extrai texto do PDF e insere/atualiza nas tabelas manuals e pages (FTS5)."""
+    brand = normalize_brand(brand)
     manual_id = custom_id or generate_manual_id(brand, model, year)
     dest_filename = f"{manual_id}.pdf"
     dest_path = db.MANUALS_DIR / dest_filename
@@ -69,7 +124,7 @@ def index_manual_pdf(
         INSERT INTO manuals(id, brand, model, year, file, pages, indexed, language)
         VALUES (?,?,?,?,?,?,?,?)
         """,
-        (manual_id, brand.strip(), model.strip(), str(year).strip(), dest_filename, page_count, int(indexed), lang),
+        (manual_id, brand, model.strip(), str(year).strip(), dest_filename, page_count, int(indexed), lang),
     )
     con.commit()
     con.close()

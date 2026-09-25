@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Assinatura - Manuais de Serviço." />
+  <link rel="icon" href="/static/img/xtreme-logo.png" />
+  <title>Assinatura — Xtreme Manuais AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=14" />
+</head>
+
+<body>
+  <div class="login-bg">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="/static/img/xtreme-logo-light.png" alt="Xtreme Mototech" width="499" height="108" />
+        <span>Manuais <b>AI</b></span>
+      </div>
+      <div class="login-logo">
+        <div class="login-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+        </div>
+        <h1>Assinatura</h1>
+      </div>
+      <p class="login-subtitle">Escolha seu plano para ter acesso imediato ao sistema.</p>
+
+      <form id="checkout-form" autocomplete="off">
+        <div class="form-group" style="margin-top: 20px;">
+          <div class="plan-picker" id="plan-picker">
+            <p style="color:var(--text-dim);font-size:var(--font-sm);">Carregando planos…</p>
+          </div>
+        </div>
+
+        <div class="error-box" id="error-box" style="display:none;" role="alert"></div>
+        <button type="submit" class="primary" id="submit-btn" disabled>
+          <span id="submit-label">Continuar para o Pagamento</span>
+        </button>
+        <p style="font-size:var(--font-xs);color:var(--text-muted);margin-top:12px;text-align:center;">
+          Pagamento processado de forma segura pela Kiwify (Pix, cartão ou boleto).
+          O acesso é liberado automaticamente após a confirmação.
+        </p>
+      </form>
+      
+      <div style="margin-top:24px; text-align:center;">
+          <button class="logout" id="logout-btn" style="background:none; border:none; color:var(--text-dim); cursor:pointer; text-decoration:underline;">Sair da conta</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedPlanSlug = null;
+    let availablePlans = [];
+
+    async function loadPlans() {
+      const picker = document.getElementById("plan-picker");
+      try {
+        const res   = await fetch("/api/plans");
+        const plans = await res.json();
+        availablePlans = plans;
+        if (!plans.length) {
+          picker.innerHTML = '<p style="color:var(--text-dim);font-size:var(--font-sm);">Nenhum plano disponível no momento.</p>';
+          return;
+        }
+        picker.innerHTML = plans.map(p => `
+          <label class="plan-card" id="plan-card-${p.id}" onclick="selectPlan(${p.id})">
+            <input type="radio" name="plan" value="${p.id}" />
+            <div class="plan-radio-dot"></div>
+            <div class="plan-card-body">
+              <div class="plan-card-header">
+                <span class="plan-card-name">${escHtml(p.name)}</span>
+                <span class="plan-card-price">R$ ${Number(p.price).toFixed(2).replace('.', ',')}<small style="font-size:0.7em;color:var(--text-dim);font-weight:400;">/mês</small></span>
+              </div>
+              <div class="plan-card-desc">${escHtml(p.description || '')}</div>
+            </div>
+          </label>
+        `).join("");
+        
+        if (plans.length > 0) selectPlan(plans[0].id);
+      } catch {
+        picker.innerHTML = '<p style="color:var(--text-dim);font-size:var(--font-sm);">Não foi possível carregar os planos.</p>';
+      }
+    }
+
+    window.selectPlan = function(id) {
+      document.querySelectorAll(".plan-card").forEach(c => c.classList.remove("selected"));
+      const card = document.getElementById("plan-card-" + id);
+      if (card) { 
+          card.classList.add("selected"); 
+          card.querySelector("input[type=radio]").checked = true; 
+      }
+      
+      const plan = availablePlans.find(p => p.id === id);
+      if (plan) {
+          selectedPlanSlug = plan.slug;
+          document.getElementById("submit-btn").disabled = false;
+      }
+    };
+
+    function escHtml(str) {
+      const d = document.createElement("div"); d.textContent = str; return d.innerHTML;
+    }
+
+    // FORM SUBMIT
+    const errorBox  = document.getElementById("error-box");
+    const submitBtn = document.getElementById("submit-btn");
+    const submitLbl = document.getElementById("submit-label");
+
+    document.getElementById("checkout-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!selectedPlanSlug) return;
+      
+      errorBox.style.display = "none";
+      submitBtn.disabled = true;
+      submitLbl.textContent = "Gerando cobrança...";
+      submitBtn.insertAdjacentHTML("afterbegin", '<span class="spinner" style="width:14px;height:14px;"></span>');
+      
+      try {
+        const checkRes = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan_slug: selectedPlanSlug })
+        });
+        
+        if (!checkRes.ok) {
+           const data = await checkRes.json().catch(()=>({}));
+           throw new Error(data.detail || "Erro ao gerar o checkout na Kiwify");
+        }
+        
+        const checkData = await checkRes.json();
+        window.location.href = checkData.checkout_url;
+      } catch (err) {
+        errorBox.textContent = err.message || "Erro no checkout.";
+        errorBox.style.display = "block";
+        submitBtn.disabled = false;
+        submitLbl.textContent = "Continuar para o Pagamento";
+        submitBtn.querySelector(".spinner")?.remove();
+      }
+    });
+    
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+        await fetch("/auth/logout", { method: "POST" }).catch(()=>null);
+        document.cookie = "token=; Max-Age=0; path=/";
+        window.location.href = "/";
+    });
+
+    loadPlans();
+  </script>
+</body>
+</html>

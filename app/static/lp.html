@@ -1,0 +1,1541 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Xtreme Manuais AI — manual de serviço de moto respondendo em segundos</title>
+<meta name="description" content="Sistema da Xtreme Mototech para oficinas: pergunte em português e receba a especificação do manual de serviço oficial com a página citada. Torque, folga de válvula, sequência de desmontagem." />
+<meta name="theme-color" content="#0c0d10" />
+<meta property="og:title" content="Xtreme Manuais AI — o manual de serviço responde em segundos" />
+<meta property="og:description" content="Escolha a moto, pergunte em português e receba a resposta com a página do manual oficial. Um produto Xtreme Mototech." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="/static/img/xtreme-logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   XTREME MANUAIS AI — landing page
+   Paleta tirada do logo da Xtreme: vermelho #e21c1f sobre grafite.
+   ============================================================ */
+
+:root{
+  --ink:        #0c0d10;
+  --ink-2:      #111318;
+  --ink-3:      #171a21;
+  --panel:      #13161c;
+  --line:       rgba(255,255,255,.09);
+  --line-2:     rgba(255,255,255,.16);
+
+  --red:        #e21c1f;
+  --red-hi:     #ff3a34;
+  --red-dark:   #8e1114;
+  --red-dim:    rgba(226,28,31,.12);
+
+  --paper:      #eef0f4;
+  --paper-2:    #b9bfca;
+  --muted:      #858d9b;
+  --muted-2:    #5d6470;
+
+  --mark:       #ffd933;          /* mesmo amarelo do destaque no PDF */
+
+  --sans:       'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --cond:       'Barlow Condensed', 'Inter', sans-serif;
+  --mono:       'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --wrap:       1180px;
+  --ease:       cubic-bezier(.22,.61,.36,1);
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0 }
+
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100% }
+
+body{
+  font-family:var(--sans);
+  background:var(--ink);
+  color:var(--paper);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+img{ max-width:100%; display:block }
+a{ color:inherit; text-decoration:none }
+button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer }
+
+::selection{ background:var(--red); color:#fff }
+
+/* ── utilitários ─────────────────────────────────────────── */
+.wrap{ width:100%; max-width:var(--wrap); margin-inline:auto; padding-inline:22px }
+
+.section{ padding:96px 0; position:relative }
+[id]{ scroll-margin-top:88px }   /* o menu fixo não cobre o alvo da âncora */
+.section--tight{ padding:72px 0 }
+
+.eyebrow{
+  font-family:var(--cond);
+  font-size:.86rem; font-weight:600;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--red-hi);
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:18px;
+}
+.eyebrow::before{
+  content:""; width:26px; height:2px;
+  background:linear-gradient(90deg,var(--red),transparent);
+}
+.eyebrow--center{ justify-content:center }
+
+h1,h2,h3{ font-family:var(--cond); font-weight:700; line-height:1.02; letter-spacing:-.005em }
+
+h1{ font-size:clamp(2.6rem,6.4vw,4.6rem); text-transform:uppercase }
+h2{ font-size:clamp(2rem,4.4vw,3.2rem); text-transform:uppercase }
+h3{ font-size:1.32rem; text-transform:uppercase; letter-spacing:.01em }
+
+.lead{ font-size:clamp(1rem,1.9vw,1.16rem); color:var(--paper-2); max-width:56ch }
+
+.mono{ font-family:var(--mono); font-size:.82rem; letter-spacing:-.02em }
+
+.hair{ height:1px; background:var(--line); border:0 }
+
+/* chevrons do logo, usados como assinatura gráfica */
+.chevs{ display:inline-flex; gap:3px; align-items:center }
+.chevs i{
+  width:7px; height:15px; display:block; transform:skewX(-20deg);
+  background:var(--red);
+}
+.chevs i:nth-child(1){ opacity:.30 }
+.chevs i:nth-child(2){ opacity:.60 }
+.chevs i:nth-child(3){ opacity:1 }
+
+/* ── revelação no scroll ─────────────────────────────────── */
+.rv{ opacity:0; transform:translateY(24px); transition:opacity .7s var(--ease), transform .7s var(--ease) }
+.rv.in{ opacity:1; transform:none }
+.rv[data-d="1"]{ transition-delay:.08s } .rv[data-d="2"]{ transition-delay:.16s }
+.rv[data-d="3"]{ transition-delay:.24s } .rv[data-d="4"]{ transition-delay:.32s }
+.rv[data-d="5"]{ transition-delay:.40s } .rv[data-d="6"]{ transition-delay:.48s }
+
+/* ── botões ──────────────────────────────────────────────── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  padding:15px 26px; border-radius:3px;
+  font-family:var(--cond); font-size:1.06rem; font-weight:600;
+  letter-spacing:.09em; text-transform:uppercase; white-space:nowrap;
+  transition:transform .18s var(--ease), background .18s, border-color .18s, box-shadow .18s;
+}
+.btn svg{ width:17px; height:17px; flex:none }
+.btn--red{
+  background:var(--red); color:#fff;
+  box-shadow:0 10px 26px -12px rgba(226,28,31,.9);
+}
+.btn--red:hover{ background:var(--red-hi); transform:translateY(-2px); box-shadow:0 16px 32px -12px rgba(226,28,31,.95) }
+.btn--ghost{ border:1px solid var(--line-2); color:var(--paper) }
+.btn--ghost:hover{ border-color:var(--paper-2); background:rgba(255,255,255,.04); transform:translateY(-2px) }
+.btn--sm{ padding:11px 18px; font-size:.95rem }
+.btn--block{ width:100% }
+
+/* ── nav ─────────────────────────────────────────────────── */
+.nav{
+  position:fixed; inset:0 0 auto 0; z-index:80;
+  transition:background .3s, border-color .3s, backdrop-filter .3s;
+  border-bottom:1px solid transparent;
+}
+.nav.stuck{
+  background:rgba(12,13,16,.86);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom-color:var(--line);
+}
+.nav-in{ display:flex; align-items:center; gap:28px; height:70px }
+.brandmark{ display:flex; align-items:center; gap:12px; flex:none }
+.brandmark img{ height:23px; width:auto }
+.brandmark .div{ width:1px; height:22px; background:var(--line-2) }
+.brandmark .prod{
+  font-family:var(--cond); font-weight:600; font-size:1.02rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--paper);
+}
+.brandmark .prod b{ color:var(--red-hi); font-weight:600 }
+
+.nav-links{ display:flex; gap:26px; margin-left:auto }
+.nav-links a{
+  font-size:.9rem; color:var(--paper-2); font-weight:500;
+  position:relative; padding:4px 0; transition:color .2s;
+}
+.nav-links a::after{
+  content:""; position:absolute; left:0; bottom:0; height:1.5px; width:0;
+  background:var(--red); transition:width .25s var(--ease);
+}
+.nav-links a:hover{ color:#fff } .nav-links a:hover::after{ width:100% }
+.nav-cta{ display:flex; align-items:center; gap:10px; flex:none }
+.nav-burger{ display:none; padding:8px; margin-left:auto }
+.nav-burger span{ display:block; width:22px; height:2px; background:var(--paper); margin:4px 0; transition:.25s }
+
+.scrollbar{ position:absolute; left:0; bottom:-1px; height:2px; width:0; background:var(--red) }
+
+/* ── hero ────────────────────────────────────────────────── */
+.hero{ position:relative; padding:150px 0 70px; overflow:hidden }
+.hero::before{                       /* brilho vermelho */
+  content:""; position:absolute; top:-320px; right:-180px;
+  width:780px; height:780px; border-radius:50%;
+  background:radial-gradient(circle,rgba(226,28,31,.20) 0%,transparent 62%);
+  filter:blur(18px); pointer-events:none;
+  animation:breathe 9s ease-in-out infinite alternate;
+}
+.hero::after{                        /* grade técnica */
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 10%,transparent 72%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 10%,transparent 72%);
+  opacity:.5;
+}
+@keyframes breathe{ from{ transform:scale(1); opacity:.75 } to{ transform:scale(1.15); opacity:1 } }
+
+.hero-in{ position:relative; z-index:1 }
+.hero h1{ margin-bottom:22px; max-width:15ch }
+.hero h1 em{ font-style:normal; color:var(--red-hi) }
+.hero .lead{ margin-bottom:34px }
+.hero-actions{ display:flex; flex-wrap:wrap; gap:14px; align-items:center }
+.hero-note{
+  display:flex; align-items:center; gap:8px;
+  margin-top:20px; font-size:.84rem; color:var(--muted);
+}
+.hero-note svg{ width:15px; height:15px; color:var(--red-hi); flex:none }
+
+/* placa de números */
+.stats{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--line); border-radius:4px;
+  margin-top:56px; background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+}
+.stat{ padding:22px 24px; border-right:1px solid var(--line) }
+.stat:last-child{ border-right:0 }
+.stat b{
+  display:block; font-family:var(--cond); font-weight:700;
+  font-size:2.3rem; line-height:1; color:#fff; letter-spacing:-.01em;
+}
+.stat span{
+  display:block; margin-top:7px; font-size:.75rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); font-weight:500;
+}
+
+/* ── demo do sistema ─────────────────────────────────────── */
+.demo-grid{ display:grid; grid-template-columns:300px 1fr; gap:38px; align-items:start; margin-top:44px }
+
+.steps{ position:sticky; top:104px }
+.step{
+  display:grid; grid-template-columns:auto 1fr; gap:14px;
+  padding:16px 16px 16px 14px; border-left:2px solid var(--line);
+  cursor:pointer; transition:border-color .3s, background .3s;
+}
+.step:hover{ background:rgba(255,255,255,.02) }
+.step.on{ border-left-color:var(--red); background:rgba(226,28,31,.05) }
+.step-n{
+  font-family:var(--mono); font-size:.76rem; color:var(--muted-2);
+  padding-top:3px; transition:color .3s;
+}
+.step.on .step-n{ color:var(--red-hi) }
+.step h3{ font-size:1.05rem; margin-bottom:5px; color:var(--paper-2); transition:color .3s }
+.step.on h3{ color:#fff }
+.step p{ font-size:.87rem; color:var(--muted); line-height:1.5 }
+.step-bar{ grid-column:1/-1; height:2px; background:var(--line); margin-top:12px; display:none }
+.step.on .step-bar{ display:block }
+.step-bar i{ display:block; height:100%; width:0; background:var(--red) }
+.step.on .step-bar i{ animation:fill var(--dur,5s) linear forwards }
+@keyframes fill{ to{ width:100% } }
+
+/* janela do app */
+.window{
+  border:1px solid var(--line-2); border-radius:8px; overflow:hidden;
+  background:var(--ink-2);
+  box-shadow:0 40px 80px -40px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.02);
+}
+.win-bar{
+  display:flex; align-items:center; gap:10px;
+  padding:0 14px; height:42px;
+  background:var(--ink-3); border-bottom:1px solid var(--line);
+}
+.dots{ display:flex; gap:6px }
+.dots i{ width:9px; height:9px; border-radius:50%; background:#2b303a; display:block }
+.win-url{
+  flex:1; display:flex; align-items:center; gap:7px;
+  background:#0e1015; border:1px solid var(--line); border-radius:3px;
+  padding:5px 11px; font-family:var(--mono); font-size:.72rem; color:var(--muted);
+  max-width:330px; margin-inline:auto;
+}
+.win-url svg{ width:11px; height:11px; color:#3f8a5c; flex:none }
+
+.win-body{ display:grid; grid-template-columns:186px 1fr; min-height:436px }
+
+/* lista de motos */
+.w-side{ border-right:1px solid var(--line); background:#0f1116; padding:12px 0 }
+.w-side-h{
+  padding:0 14px 10px; font-size:.67rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted-2);
+}
+.moto{
+  display:flex; align-items:center; gap:9px;
+  padding:9px 14px; font-size:.79rem; color:var(--muted);
+  border-left:2px solid transparent; transition:.25s;
+}
+.moto i{ width:6px; height:6px; border-radius:50%; background:#2b303a; flex:none; transition:.25s }
+.moto.sel{ background:rgba(226,28,31,.1); border-left-color:var(--red); color:#fff }
+.moto.sel i{ background:var(--red); box-shadow:0 0 0 3px rgba(226,28,31,.2) }
+
+/* área principal */
+.w-main{ padding:16px; display:flex; flex-direction:column; gap:13px; position:relative }
+.w-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap }
+.w-title{ font-family:var(--cond); font-size:1.18rem; text-transform:uppercase; letter-spacing:.02em }
+.w-title small{ display:block; font-family:var(--sans); font-size:.7rem; letter-spacing:.1em; color:var(--muted-2); text-transform:uppercase; margin-top:2px }
+.w-tabs{ display:flex; gap:4px }
+.w-tab{ font-size:.72rem; padding:5px 11px; border-radius:3px; color:var(--muted); border:1px solid transparent }
+.w-tab.on{ background:rgba(255,255,255,.06); color:#fff; border-color:var(--line) }
+
+.ask{
+  display:flex; align-items:center; gap:10px;
+  border:1px solid var(--line-2); border-radius:4px; padding:12px 13px;
+  background:#0e1015; transition:border-color .3s, box-shadow .3s;
+}
+.ask.hot{ border-color:rgba(226,28,31,.55); box-shadow:0 0 0 3px rgba(226,28,31,.1) }
+.ask-txt{ flex:1; font-size:.86rem; color:#fff; min-height:1.3em }
+.ask-txt.ph{ color:var(--muted-2) }
+.caret{ display:inline-block; width:1.5px; height:1em; background:var(--red-hi); vertical-align:-2px; margin-left:1px; animation:blink 1s steps(1) infinite }
+@keyframes blink{ 50%{ opacity:0 } }
+.ask-btn{
+  font-family:var(--cond); font-size:.86rem; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--red); color:#fff; padding:8px 15px; border-radius:3px; transition:transform .2s;
+}
+.ask-btn.press{ transform:scale(.93) }
+
+.out{ flex:1; position:relative }
+.pane{ position:absolute; inset:0; opacity:0; transform:translateY(8px); transition:opacity .45s var(--ease), transform .45s var(--ease); pointer-events:none }
+.pane.on{ opacity:1; transform:none; pointer-events:auto }
+
+.hint{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:12px; color:var(--muted-2); text-align:center }
+.hint svg{ width:36px; height:36px; opacity:.4 }
+.hint p{ font-size:.82rem; max-width:24ch }
+
+.load{ display:flex; flex-direction:column; gap:11px; padding-top:6px }
+.load-lab{ display:flex; align-items:center; gap:9px; font-size:.78rem; color:var(--muted) }
+.spin{ width:13px; height:13px; border:2px solid rgba(255,255,255,.14); border-top-color:var(--red); border-radius:50%; animation:spin .7s linear infinite }
+@keyframes spin{ to{ transform:rotate(360deg) } }
+.sk{ height:9px; border-radius:2px; background:linear-gradient(90deg,#1a1e26 25%,#242935 50%,#1a1e26 75%); background-size:200% 100%; animation:sweep 1.2s linear infinite }
+@keyframes sweep{ to{ background-position:-200% 0 } }
+
+.answer{ display:flex; flex-direction:column; gap:10px }
+.ans-line{ font-size:.87rem; line-height:1.62; color:var(--paper-2); opacity:0; transform:translateY(6px); transition:.5s var(--ease) }
+.ans-line.show{ opacity:1; transform:none }
+.ans-line b{ color:#fff; font-weight:600 }
+.spec{
+  font-family:var(--mono); font-size:.96rem; font-weight:700; color:#fff;
+  background:var(--red-dim); border:1px solid rgba(226,28,31,.35);
+  border-radius:3px; padding:2px 8px; display:inline-block;
+}
+.cites{ display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; opacity:0; transform:translateY(6px); transition:.5s var(--ease) }
+.cites.show{ opacity:1; transform:none }
+.cite{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:.72rem; color:var(--paper);
+  border:1px solid var(--line-2); border-radius:3px; padding:5px 10px;
+  background:rgba(255,255,255,.03); transition:.25s;
+}
+.cite svg{ width:11px; height:11px; color:var(--red-hi) }
+.cite.pulse{ border-color:var(--red); background:var(--red-dim); animation:pop .5s var(--ease) }
+@keyframes pop{ 50%{ transform:scale(1.07) } }
+
+/* página do manual renderizada */
+.sheet{ position:absolute; inset:0; display:flex; flex-direction:column; gap:9px }
+.sheet-h{ display:flex; align-items:center; justify-content:space-between; font-family:var(--mono); font-size:.7rem; color:var(--muted) }
+.sheet-h span:last-child{ color:var(--red-hi) }
+.paper{
+  flex:1; background:#f6f6f4; border-radius:3px; padding:16px 18px;
+  color:#1b1b1b; overflow:hidden; position:relative;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);
+}
+.paper h4{ font-family:var(--cond); font-size:.92rem; text-transform:uppercase; letter-spacing:.08em; color:#111; margin-bottom:9px; border-bottom:1px solid #d3d3cf; padding-bottom:6px }
+.paper p{ font-size:.73rem; line-height:1.72; color:#3a3a38; margin-bottom:5px }
+.paper .pl{ height:6px; background:#dedbd5; border-radius:2px; margin-bottom:8px }
+.paper .pl.s{ width:62% } .paper .pl.m{ width:84% }
+/* o marcador é pintado como fundo do próprio trecho: nada de z-index negativo,
+   que sumiria atrás do papel branco */
+.mk{
+  font-weight:700; color:#111; border-radius:2px;
+  padding:1px 3px; margin:0 -3px;
+  background-image:linear-gradient(var(--mark),var(--mark));
+  background-repeat:no-repeat; background-size:0 100%;
+  -webkit-box-decoration-break:clone; box-decoration-break:clone;
+}
+.sheet.on .mk{ animation:mark .6s .35s var(--ease) forwards }
+@keyframes mark{ to{ background-size:100% 100% } }
+.paper-foot{ position:absolute; left:18px; right:18px; bottom:11px; display:flex; justify-content:space-between; font-family:var(--mono); font-size:.62rem; color:#8b8b85; border-top:1px solid #dedbd5; padding-top:7px }
+
+.demo-ctl{ display:flex; align-items:center; gap:14px; margin-top:14px; font-size:.78rem; color:var(--muted) }
+.demo-ctl button{ display:inline-flex; align-items:center; gap:7px; color:var(--paper-2); transition:color .2s }
+.demo-ctl button:hover{ color:#fff }
+.demo-ctl svg{ width:13px; height:13px }
+
+/* ── cards de processo ───────────────────────────────────── */
+.cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:46px }
+.card{ background:var(--ink); padding:34px 30px; transition:background .35s }
+.card:hover{ background:var(--ink-2) }
+.card-n{ font-family:var(--mono); font-size:.74rem; color:var(--red-hi); margin-bottom:22px }
+.card-ico{ width:34px; height:34px; color:var(--paper); margin-bottom:18px; stroke-width:1.4 }
+.card h3{ margin-bottom:11px }
+.card p{ font-size:.92rem; color:var(--muted); line-height:1.65 }
+
+/* ── comparativo ─────────────────────────────────────────── */
+.vs{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:44px }
+.vs-col{ border:1px solid var(--line); border-radius:4px; padding:28px 26px; background:var(--ink-2) }
+.vs-col.good{ border-color:rgba(226,28,31,.4); background:linear-gradient(180deg,rgba(226,28,31,.07),transparent 60%) }
+.vs-tag{
+  font-family:var(--cond); font-size:.82rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:20px; display:flex; align-items:center; gap:9px;
+}
+.vs-col.good .vs-tag{ color:var(--red-hi) }
+.vs-li{ display:flex; gap:12px; padding:11px 0; border-top:1px solid var(--line); font-size:.93rem; color:var(--paper-2) }
+.vs-li:first-of-type{ border-top:0 }
+.vs-li svg{ width:16px; height:16px; flex:none; margin-top:3px; color:var(--muted-2) }
+.vs-col.good .vs-li svg{ color:var(--red) }
+.vs-foot{ margin-top:20px; padding-top:16px; border-top:1px solid var(--line); font-family:var(--mono); font-size:.78rem; color:var(--muted) }
+.vs-col.good .vs-foot{ color:#fff }
+
+/* ── recursos ────────────────────────────────────────────── */
+.feats{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:44px }
+.feat{ background:var(--ink); padding:26px 24px; position:relative; transition:background .3s }
+.feat:hover{ background:var(--ink-2) }
+.feat svg{ width:21px; height:21px; color:var(--red-hi); stroke-width:1.5; margin-bottom:14px }
+.feat h3{ font-size:1rem; margin-bottom:7px }
+.feat p{ font-size:.85rem; color:var(--muted); line-height:1.6 }
+
+/* ── acervo ──────────────────────────────────────────────── */
+.filters{ display:flex; flex-wrap:wrap; gap:9px; margin:32px 0 26px }
+.filt{
+  font-family:var(--cond); font-size:.92rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:8px 17px; border:1px solid var(--line); border-radius:3px; color:var(--muted);
+  transition:.22s;
+}
+.filt:hover{ border-color:var(--line-2); color:var(--paper) }
+.filt.on{ background:var(--red); border-color:var(--red); color:#fff }
+.filt b{ font-weight:400; opacity:.65; margin-left:6px; font-family:var(--mono); font-size:.74rem }
+
+.garage{ display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line) }
+.bike{
+  background:var(--ink); padding:15px 17px; display:flex; align-items:center; gap:13px;
+  transition:background .25s;
+}
+.bike:hover{ background:var(--ink-2) }
+.bike.hide{ display:none }
+.bike-mk{ font-family:var(--mono); font-size:.66rem; color:var(--muted-2); letter-spacing:.08em; text-transform:uppercase }
+.bike-md{ font-family:var(--cond); font-size:1.06rem; text-transform:uppercase; color:#fff; letter-spacing:.02em }
+.bike-yr{ font-family:var(--mono); font-size:.72rem; color:var(--muted); margin-left:auto; flex:none }
+.bike.soon .bike-md{ color:var(--muted) }
+.bike.soon .bike-yr{ color:var(--muted-2) }
+.garage.compacto .bike.extra{ display:none }
+.ver-todas{
+  display:block; width:100%; margin-top:1px;
+  padding:15px; border:1px solid var(--line); border-top:0;
+  font-family:var(--cond); font-size:1rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--paper-2);
+  background:var(--ink-2); transition:.22s;
+}
+.ver-todas:hover{ color:#fff; background:var(--ink-3); border-color:var(--line-2) }
+.acervo-note{ margin-top:18px; font-size:.85rem; color:var(--muted); display:flex; gap:9px; align-items:flex-start }
+.acervo-note svg{ width:15px; height:15px; color:var(--muted-2); flex:none; margin-top:3px }
+
+/* ── planos ──────────────────────────────────────────────── */
+.plans{ display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-top:46px; align-items:start }
+.plan{
+  border:1px solid var(--line); border-radius:5px; background:var(--ink-2);
+  padding:34px 32px 32px; position:relative; transition:transform .3s var(--ease), border-color .3s;
+}
+.plan:hover{ transform:translateY(-4px); border-color:var(--line-2) }
+.plan.hot{ border-color:rgba(226,28,31,.5); background:linear-gradient(180deg,rgba(226,28,31,.08),var(--ink-2) 55%) }
+.plan-flag{
+  position:absolute; top:-1px; right:24px;
+  background:var(--red); color:#fff; font-family:var(--cond); font-size:.78rem;
+  letter-spacing:.16em; text-transform:uppercase; padding:5px 13px; border-radius:0 0 3px 3px;
+}
+.plan h3{ font-size:1.5rem; margin-bottom:6px }
+.plan-sub{ font-size:.88rem; color:var(--muted); margin-bottom:24px; min-height:2.6em }
+.price{ display:flex; align-items:flex-end; gap:7px; margin-bottom:6px }
+.price b{ font-family:var(--cond); font-size:3.4rem; font-weight:700; line-height:.9; color:#fff }
+.price i{ font-style:normal; font-size:1rem; color:var(--muted); padding-bottom:5px }
+.price-note{ font-size:.79rem; color:var(--muted-2); margin-bottom:26px }
+.plan ul{ list-style:none; margin-bottom:28px }
+.plan li{ display:flex; gap:11px; padding:9px 0; font-size:.91rem; color:var(--paper-2); border-top:1px solid var(--line) }
+.plan li:first-child{ border-top:0 }
+.plan li svg{ width:15px; height:15px; flex:none; margin-top:4px; color:var(--red) }
+.pay-note{ margin-top:22px; font-size:.82rem; color:var(--muted); text-align:center; display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap }
+.pay-note svg{ width:14px; height:14px; color:var(--muted-2) }
+
+/* ── faq ─────────────────────────────────────────────────── */
+.faq{ margin-top:40px; border-top:1px solid var(--line) }
+.faq details{ border-bottom:1px solid var(--line) }
+.faq summary{
+  display:flex; align-items:center; gap:16px; padding:22px 4px;
+  font-family:var(--cond); font-size:1.24rem; text-transform:uppercase; letter-spacing:.01em;
+  cursor:pointer; list-style:none; transition:color .2s;
+}
+.faq summary::-webkit-details-marker{ display:none }
+.faq summary:hover{ color:var(--red-hi) }
+.faq summary .pm{ margin-left:auto; position:relative; width:13px; height:13px; flex:none }
+.faq summary .pm::before,.faq summary .pm::after{
+  content:""; position:absolute; background:var(--red); transition:transform .25s var(--ease);
+}
+.faq summary .pm::before{ left:0; top:5.5px; width:13px; height:2px }
+.faq summary .pm::after{ top:0; left:5.5px; width:2px; height:13px }
+.faq details[open] summary .pm::after{ transform:rotate(90deg) scaleY(0) }
+.faq-a{ padding:0 4px 24px 33px; font-size:.94rem; color:var(--muted); max-width:78ch; line-height:1.7 }
+.faq-n{ font-family:var(--mono); font-size:.76rem; color:var(--muted-2); flex:none }
+
+/* ── cta final ───────────────────────────────────────────── */
+.cta{
+  border:1px solid var(--line); border-radius:5px; padding:58px 50px;
+  background:
+    radial-gradient(ellipse 60% 120% at 88% 50%,rgba(226,28,31,.18),transparent 65%),
+    var(--ink-2);
+  display:flex; align-items:center; justify-content:space-between; gap:36px; flex-wrap:wrap;
+}
+.cta h2{ margin-bottom:12px; max-width:18ch }
+.cta p{ color:var(--paper-2); max-width:46ch }
+
+/* ── rodapé ──────────────────────────────────────────────── */
+.foot{ border-top:1px solid var(--line); padding:56px 0 34px; background:var(--ink-2) }
+.foot-grid{ display:grid; grid-template-columns:1.6fr 1fr 1fr; gap:40px }
+.foot-logo{ height:27px; width:auto; margin-bottom:18px }
+.foot p{ font-size:.87rem; color:var(--muted); max-width:42ch; line-height:1.7 }
+.foot-slogan{ font-family:var(--cond); letter-spacing:.14em; text-transform:uppercase; color:var(--paper-2); font-size:.92rem; margin-top:16px }
+.foot h4{ font-family:var(--cond); font-size:.86rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted-2); margin-bottom:16px }
+.foot ul{ list-style:none; display:flex; flex-direction:column; gap:11px }
+.foot ul a,.foot ul li{ font-size:.89rem; color:var(--paper-2); transition:color .2s; display:flex; align-items:center; gap:9px }
+.foot ul a:hover{ color:var(--red-hi) }
+.foot ul svg{ width:14px; height:14px; color:var(--muted-2); flex:none }
+.legal{
+  margin-top:44px; padding-top:22px; border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  font-size:.79rem; color:var(--muted-2);
+}
+.legal .mono{ font-size:.76rem }
+
+/* ── whatsapp flutuante ──────────────────────────────────── */
+.wa{
+  position:fixed; right:20px; bottom:20px; z-index:70;
+  display:flex; align-items:center; gap:10px;
+  background:#1f9d55; color:#fff; padding:13px 18px; border-radius:40px;
+  font-size:.88rem; font-weight:600;
+  box-shadow:0 14px 30px -12px rgba(0,0,0,.8);
+  transform:translateY(90px); opacity:0;
+  transition:transform .4s var(--ease), opacity .4s, background .2s;
+}
+.wa.in{ transform:none; opacity:1 }
+.wa:hover{ background:#24b262 }
+.wa svg{ width:19px; height:19px; flex:none }
+
+/* ── responsivo ──────────────────────────────────────────── */
+@media (max-width:1040px){
+  .demo-grid{ grid-template-columns:1fr; gap:26px }
+  .steps{ position:static; display:grid; grid-template-columns:repeat(2,1fr); gap:8px }
+  .feats{ grid-template-columns:repeat(2,1fr) }
+}
+@media (max-width:860px){
+  .nav-links{ display:none }
+  .nav-burger{ display:block }
+  .nav-cta .btn--ghost{ display:none }
+  .nav.open .nav-links{
+    display:flex; position:absolute; top:70px; left:0; right:0; flex-direction:column; gap:0;
+    background:rgba(12,13,16,.97); backdrop-filter:blur(14px); border-bottom:1px solid var(--line);
+    padding:8px 22px 20px;
+  }
+  .nav.open .nav-links a{ padding:14px 0; border-bottom:1px solid var(--line) }
+  .hero{ padding-top:120px }
+  .stats{ grid-template-columns:repeat(2,1fr) }
+  .stat:nth-child(2){ border-right:0 }
+  .stat:nth-child(-n+2){ border-bottom:1px solid var(--line) }
+  .cards,.vs,.plans{ grid-template-columns:1fr }
+  .win-body{ grid-template-columns:1fr; min-height:0 }
+  .w-side{ border-right:0; border-bottom:1px solid var(--line); display:flex; gap:6px; overflow-x:auto; padding:10px; scrollbar-width:none }
+  .w-side::-webkit-scrollbar{ display:none }
+  .w-side-h{ display:none }
+  .moto{ border-left:0; border-bottom:2px solid transparent; border-radius:3px; background:#13161c; white-space:nowrap; padding:7px 12px }
+  .moto.sel{ border-left:0; border-bottom-color:var(--red) }
+  .out{ min-height:270px }
+  .cta{ padding:40px 28px }
+  .foot-grid{ grid-template-columns:1fr; gap:34px }
+  .section{ padding:72px 0 }
+}
+@media (max-width:520px){
+  .steps{ grid-template-columns:1fr }
+  .feats{ grid-template-columns:1fr }
+  .hero-actions .btn{ width:100% }
+  .wa span{ display:none }
+  .wa{ padding:15px; border-radius:50% }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important }
+  .rv{ opacity:1; transform:none }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════════════════ -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a href="#topo" class="brandmark" aria-label="Xtreme Mototech — Manuais AI">
+      <img src="/static/img/xtreme-logo-light.png" alt="Xtreme Mototech" width="499" height="108" />
+      <span class="div"></span>
+      <span class="prod">Manuais <b>AI</b></span>
+    </a>
+
+    <nav class="nav-links" id="navlinks">
+      <a href="#demo">Como funciona</a>
+      <a href="#processo">Por dentro</a>
+      <a href="#acervo">Acervo</a>
+      <a href="#planos">Planos</a>
+      <a href="#faq">Dúvidas</a>
+    </nav>
+
+    <button class="nav-burger" id="burger" aria-label="Abrir menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-cta">
+      <a href="/login" class="btn btn--ghost btn--sm">Entrar</a>
+      <a href="#planos" class="btn btn--red btn--sm">Assinar</a>
+    </div>
+  </div>
+  <div class="scrollbar" id="scrollbar"></div>
+</header>
+
+<!-- ══ HERO ═════════════════════════════════════════════════ -->
+<section class="hero" id="topo">
+  <div class="wrap hero-in">
+    <p class="eyebrow rv">Xtreme Mototech · Ferramenta de oficina</p>
+
+    <h1 class="rv" data-d="1">Pare de caçar torque em <em>PDF de 700 páginas</em></h1>
+
+    <p class="lead rv" data-d="2">
+      O Manuais AI lê o manual de serviço oficial da moto e responde a sua pergunta em português —
+      sempre citando a página, para você conferir no manual original antes de apertar o parafuso.
+    </p>
+
+    <div class="hero-actions rv" data-d="3">
+      <a href="#planos" class="btn btn--red">
+        Ver planos
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a href="#demo" class="btn btn--ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Ver o sistema funcionando
+      </a>
+    </div>
+
+    <p class="hero-note rv" data-d="4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Acesso liberado automaticamente após o pagamento · Pix, cartão ou boleto
+    </p>
+
+    <div class="stats rv" data-d="5">
+      <div class="stat"><b data-count="99">0</b><span>Manuais no acervo</span></div>
+      <div class="stat"><b data-count="44647">0</b><span>Páginas indexadas</span></div>
+      <div class="stat"><b>7</b><span>Marcas atendidas</span></div>
+      <div class="stat"><b>100%</b><span>Respostas com página</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DEMO ═════════════════════════════════════════════════ -->
+<section class="section section--tight" id="demo">
+  <div class="wrap">
+    <p class="eyebrow rv">O sistema em uso</p>
+    <h2 class="rv" data-d="1">Da pergunta à página do manual</h2>
+    <p class="lead rv" data-d="2" style="margin-top:16px">
+      Abaixo, uma consulta real rodando no sistema: torque do parafuso de dreno de óleo de uma
+      Yamaha MT-07 2016 — manual de 485 páginas.
+    </p>
+
+    <div class="demo-grid">
+      <!-- passos -->
+      <div class="steps rv" data-d="1" id="steps">
+        <div class="step" data-step="0">
+          <span class="step-n">01</span>
+          <div>
+            <h3>Escolha a moto</h3>
+            <p>Marca, modelo e ano. O sistema abre o manual de serviço daquele ano específico.</p>
+          </div>
+          <span class="step-bar"><i></i></span>
+        </div>
+        <div class="step" data-step="1">
+          <span class="step-n">02</span>
+          <div>
+            <h3>Pergunte em português</h3>
+            <p>Do jeito que você falaria com outro mecânico. Sem palavra-chave, sem inglês técnico.</p>
+          </div>
+          <span class="step-bar"><i></i></span>
+        </div>
+        <div class="step" data-step="2">
+          <span class="step-n">03</span>
+          <div>
+            <h3>Resposta com a página</h3>
+            <p>A IA lê só as páginas relevantes do manual e responde citando de onde tirou cada dado.</p>
+          </div>
+          <span class="step-bar"><i></i></span>
+        </div>
+        <div class="step" data-step="3">
+          <span class="step-n">04</span>
+          <div>
+            <h3>Confira no original</h3>
+            <p>Um clique abre a página do manual com o trecho destacado. A prova na sua frente.</p>
+          </div>
+          <span class="step-bar"><i></i></span>
+        </div>
+      </div>
+
+      <!-- janela do app -->
+      <div class="rv" data-d="2">
+        <div class="window" id="win">
+          <div class="win-bar">
+            <div class="dots"><i></i><i></i><i></i></div>
+            <div class="win-url">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              manuais.xtrememoto.tech
+            </div>
+            <div class="dots" style="visibility:hidden"><i></i><i></i><i></i></div>
+          </div>
+
+          <div class="win-body">
+            <aside class="w-side">
+              <p class="w-side-h">Acervo</p>
+              <div class="moto" data-moto="0"><i></i>Kawasaki Ninja 400</div>
+              <div class="moto" data-moto="1"><i></i>Yamaha MT-07</div>
+              <div class="moto" data-moto="2"><i></i>Suzuki GSX-R 750</div>
+              <div class="moto" data-moto="3"><i></i>Yamaha YZF-R3</div>
+              <div class="moto" data-moto="4"><i></i>Kawasaki Z1000</div>
+              <div class="moto" data-moto="5"><i></i>Honda CBR1000RR</div>
+            </aside>
+
+            <div class="w-main">
+              <div class="w-head">
+                <div class="w-title" id="wTitle">Selecione uma moto<small id="wSub">Nenhum manual aberto</small></div>
+                <div class="w-tabs">
+                  <span class="w-tab on">Perguntar</span>
+                  <span class="w-tab">Buscar</span>
+                  <span class="w-tab">Histórico</span>
+                </div>
+              </div>
+
+              <div class="ask" id="ask">
+                <span class="ask-txt ph" id="askTxt">Qual a sua dúvida sobre esta moto?</span>
+                <span class="ask-btn" id="askBtn">Perguntar</span>
+              </div>
+
+              <div class="out">
+                <!-- pane 0: vazio -->
+                <div class="pane on" id="p0">
+                  <div class="hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <p>Escolha a moto na lista para abrir o manual de serviço.</p>
+                  </div>
+                </div>
+
+                <!-- pane 1: carregando -->
+                <div class="pane" id="p1">
+                  <div class="load">
+                    <p class="load-lab"><span class="spin"></span> Procurando nas 485 páginas do manual…</p>
+                    <div class="sk" style="width:92%"></div>
+                    <div class="sk" style="width:78%"></div>
+                    <div class="sk" style="width:86%"></div>
+                    <div class="sk" style="width:54%"></div>
+                  </div>
+                </div>
+
+                <!-- pane 2: resposta -->
+                <div class="pane" id="p2">
+                  <div class="answer">
+                    <p class="ans-line" data-l="0">
+                      O parafuso de dreno do óleo do motor da MT-07 é apertado com
+                      <span class="spec">43 Nm</span> <span class="mono" style="color:var(--muted)">(4,3 kgf·m)</span>.
+                    </p>
+                    <p class="ans-line" data-l="1">
+                      Troque a <b>junta (arruela de vedação) por uma nova</b> a cada drenagem — o manual
+                      indica peça nova na remontagem do cárter.
+                    </p>
+                    <p class="ans-line" data-l="2">
+                      O procedimento completo de troca de óleo está na manutenção periódica:
+                      aquecer o motor, drenar pelo parafuso e conferir o nível depois.
+                    </p>
+                    <div class="cites" id="cites">
+                      <span class="cite" id="cite1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        pág. 295 — instalação do cárter
+                      </span>
+                      <span class="cite">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        pág. 119 — troca de óleo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- pane 3: página do manual -->
+                <div class="pane" id="p3">
+                  <div class="sheet" id="sheet">
+                    <div class="sheet-h">
+                      <span>YAMAHA MT-07 2016 · manual de serviço</span>
+                      <span>pág. 295 / 485</span>
+                    </div>
+                    <div class="paper">
+                      <h4>Instalação do cárter de óleo</h4>
+                      <div class="pl m"></div>
+                      <p>1. Instale: ●Junta do cárter de óleo <i>Novo</i> ●Cárter</p>
+                      <p>Parafuso do cárter — 1,0 kgf·m (10 Nm). Aperte os parafusos do cárter de óleo
+                         em fases e em um padrão cruzado.</p>
+                      <div class="pl s"></div>
+                      <p>2. Instale: ●Junta <i>Novo</i> ●Parafuso de dreno do óleo do motor</p>
+                      <p><span class="mk">Parafuso de dreno do óleo do motor — 4,3 kgf·m (43 Nm)</span></p>
+                      <div class="pl m"></div>
+                      <div class="pl s"></div>
+                      <div class="paper-foot"><span>MOTOR</span><span>5-42</span></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /.out -->
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-ctl">
+          <button id="playBtn" aria-label="Pausar demonstração">
+            <svg id="playIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/></svg>
+            <span id="playLab">Pausar</span>
+          </button>
+          <span class="mono" style="color:var(--muted-2)">consulta real · Yamaha MT-07 2016 · p. 295 e 119</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PROCESSO ═════════════════════════════════════════════ -->
+<section class="section" id="processo">
+  <div class="wrap">
+    <p class="eyebrow rv">Por dentro</p>
+    <h2 class="rv" data-d="1">Nada de chute. Tudo tem origem.</h2>
+
+    <div class="cards">
+      <article class="card rv" data-d="1">
+        <p class="card-n">/01</p>
+        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <h3>O manual entra inteiro</h3>
+        <p>Cada manual de serviço oficial é processado página por página e vira texto pesquisável.
+           Já são 44.647 páginas no índice, com busca que ignora acento — “oleo” acha “óleo”.</p>
+      </article>
+
+      <article class="card rv" data-d="2">
+        <p class="card-n">/02</p>
+        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <h3>A IA lê só o que importa</h3>
+        <p>Sua pergunta vira termos técnicos no idioma do manual, o sistema separa as páginas certas
+           e a IA lê apenas essas páginas antes de responder. Ela não responde de cabeça.</p>
+      </article>
+
+      <article class="card rv" data-d="3">
+        <p class="card-n">/03</p>
+        <svg class="card-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <h3>Você confere a fonte</h3>
+        <p>Toda resposta traz a página usada. Clicou, o manual abre naquela página com os termos
+           destacados em amarelo — dá para imprimir e anexar na ordem de serviço.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COMPARATIVO ══════════════════════════════════════════ -->
+<section class="section section--tight">
+  <div class="wrap">
+    <p class="eyebrow rv">Na prática</p>
+    <h2 class="rv" data-d="1">O que muda na bancada</h2>
+
+    <div class="vs">
+      <div class="vs-col rv" data-d="1">
+        <p class="vs-tag">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Do jeito de sempre
+        </p>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Abrir um PDF de centenas de páginas no celular, com a mão suja de graxa</div>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Caçar no sumário em inglês qual capítulo tem a tabela de aperto</div>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Perguntar no grupo do WhatsApp e receber três respostas diferentes</div>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Na dúvida, apertar no sentimento e torcer para o parafuso aguentar</div>
+        <p class="vs-foot">Resultado: serviço parado, retrabalho e peça danificada.</p>
+      </div>
+
+      <div class="vs-col good rv" data-d="2">
+        <p class="vs-tag">
+          <span class="chevs"><i></i><i></i><i></i></span>
+          Com o Manuais AI
+        </p>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Pergunta digitada em português, do jeito que você fala</div>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Resposta objetiva com o número e a unidade que você precisa</div>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> A página do manual oficial do lado, para conferir antes de apertar</div>
+        <div class="vs-li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Histórico salvo: a consulta de hoje serve para o próximo serviço igual</div>
+        <p class="vs-foot">Resultado: moto na rua no mesmo dia, com especificação de fábrica.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ RECURSOS ═════════════════════════════════════════════ -->
+<section class="section" id="recursos">
+  <div class="wrap">
+    <p class="eyebrow rv">O que vem junto</p>
+    <h2 class="rv" data-d="1">Feito para usar com a moto no elevador</h2>
+
+    <div class="feats">
+      <div class="feat rv" data-d="1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <h3>Pergunta livre</h3>
+        <p>Torque, folga de válvula, capacidade de óleo, sequência de desmontagem, código de erro.</p>
+      </div>
+      <div class="feat rv" data-d="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <h3>Busca no texto</h3>
+        <p>Além da IA, busca direta por termo em todo o manual, com ranking por relevância.</p>
+      </div>
+      <div class="feat rv" data-d="3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        <h3>Página destacada</h3>
+        <p>A página aparece renderizada, com os termos da sua pergunta marcados em amarelo.</p>
+      </div>
+      <div class="feat rv" data-d="4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <h3>PDF completo</h3>
+        <p>O manual inteiro continua disponível, abrindo direto na página citada.</p>
+      </div>
+      <div class="feat rv" data-d="1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <h3>Histórico</h3>
+        <p>Toda consulta fica salva na sua conta — a resposta de ontem em dois toques.</p>
+      </div>
+      <div class="feat rv" data-d="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+        <h3>Celular e computador</h3>
+        <p>Mesma conta nos dois. Na oficina, o celular apoiado na bancada resolve.</p>
+      </div>
+      <div class="feat rv" data-d="3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <h3>Faltou um manual?</h3>
+        <p>Você envia o PDF pelo próprio sistema e a gente indexa para o acervo.</p>
+      </div>
+      <div class="feat rv" data-d="4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <h3>Acesso por login</h3>
+        <p>Cada pessoa com o seu usuário e senha. Sessão protegida, sem link solto rodando.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ACERVO ═══════════════════════════════════════════════ -->
+<section class="section" id="acervo">
+  <div class="wrap">
+    <p class="eyebrow rv">Acervo</p>
+    <h2 class="rv" data-d="1">99 manuais de serviço, crescendo toda semana</h2>
+
+    <!-- ACERVO:INICIO -->
+    <div class="filters rv" data-d="2" id="filters">
+      <button class="filt on" data-mk="all">Todas <b>99</b></button>
+      <button class="filt" data-mk="yamaha">Yamaha <b>61</b></button>
+      <button class="filt" data-mk="kawasaki">Kawasaki <b>13</b></button>
+      <button class="filt" data-mk="harley-davidson">Harley-Davidson <b>11</b></button>
+      <button class="filt" data-mk="triumph">Triumph <b>5</b></button>
+      <button class="filt" data-mk="suzuki">Suzuki <b>4</b></button>
+      <button class="filt" data-mk="bmw">BMW <b>3</b></button>
+      <button class="filt" data-mk="honda">Honda <b>2</b></button>
+    </div>
+
+    <div class="garage rv compacto" data-d="3" id="garage">
+      <div class="bike" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">FZ6-N</p></div><span class="bike-yr">2004</span></div>
+      <div class="bike" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">FZ6-N</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">FZ6-N</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Fazer 150</p></div><span class="bike-yr">2013</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Fazer 250</p></div><span class="bike-yr">2011</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Lander 250</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Lander 250 (suplemento)</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">MT-01</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">MT-01</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">MT-03</p></div><span class="bike-yr">2008</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">MT-07</p></div><span class="bike-yr">2016</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">MT-07 ABS</p></div><span class="bike-yr">2016</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">MT-09 ABS</p></div><span class="bike-yr">2015</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Neo AT115</p></div><span class="bike-yr">2005</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Super Tenere XT1200Z</p></div><span class="bike-yr">2012</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">TDM 850</p></div><span class="bike-yr">1996</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">TDM 850</p></div><span class="bike-yr">1997</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">TDM 850</p></div><span class="bike-yr">1999</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">TDM 900</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">TT-R230</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Tenere 250</p></div><span class="bike-yr">2011</span></div>
+      <div class="bike soon extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha · em processamento</p><p class="bike-md">Tenere XT600Z</p></div><span class="bike-yr">1988</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">Tenere XT660Z</p></div><span class="bike-yr">2012</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">V-Max 1200</p></div><span class="bike-yr">1986</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">V-Max 1200</p></div><span class="bike-yr">1991</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">V-Max 1200</p></div><span class="bike-yr">1993</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">V-Max 1200</p></div><span class="bike-yr">1996</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">V-Max 1700</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">WR450F</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XJ6-F</p></div><span class="bike-yr">2010</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XJ6-F ABS (suplemento)</p></div><span class="bike-yr">2014</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XJ6-N</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XT660R</p></div><span class="bike-yr">2005</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XTZ 125</p></div><span class="bike-yr">2002</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XTZ 125</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike soon extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha · em processamento</p><p class="bike-md">XV250 Virago</p></div><span class="bike-yr">1997</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XV535 Virago</p></div><span class="bike-yr">1999</span></div>
+      <div class="bike soon extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha · em processamento</p><p class="bike-md">XV535 Virago</p></div><span class="bike-yr">2001</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XVS1100 Drag Star</p></div><span class="bike-yr">1999</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XVS650 Drag Star</p></div><span class="bike-yr">2002</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">XVS950 Midnight Star</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YBR125</p></div><span class="bike-yr">2000</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YBR125 (guia de serviço)</p></div><span class="bike-yr">—</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YBR125 (suplemento)</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YBR125 Factor</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YBR125 Factor</p></div><span class="bike-yr">2013</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZ426F</p></div><span class="bike-yr">2000</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R1</p></div><span class="bike-yr">2000</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R1</p></div><span class="bike-yr">2002</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R1</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R1</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R1</p></div><span class="bike-yr">2010</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R1 (suplemento)</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R3 ABS</p></div><span class="bike-yr">2016</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6</p></div><span class="bike-yr">1999</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6</p></div><span class="bike-yr">2000</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6</p></div><span class="bike-yr">2003</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6</p></div><span class="bike-yr">2008</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6S</p></div><span class="bike-yr">2004</span></div>
+      <div class="bike extra" data-mk="yamaha"><div><p class="bike-mk">Yamaha</p><p class="bike-md">YZF-R6S</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja 1000</p></div><span class="bike-yr">2012</span></div>
+      <div class="bike" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja 250</p></div><span class="bike-yr">2012</span></div>
+      <div class="bike" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja 300</p></div><span class="bike-yr">2013</span></div>
+      <div class="bike" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja 400</p></div><span class="bike-yr">2019</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja 650</p></div><span class="bike-yr">2013</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja H2</p></div><span class="bike-yr">2016</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja ZX-10R</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja ZX-10R</p></div><span class="bike-yr">2015</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja ZX-10R</p></div><span class="bike-yr">2017</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja ZX-14</p></div><span class="bike-yr">2012</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Ninja ZX-6R</p></div><span class="bike-yr">2020</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Z1000</p></div><span class="bike-yr">2012</span></div>
+      <div class="bike extra" data-mk="kawasaki"><div><p class="bike-mk">Kawasaki</p><p class="bike-md">Z1000</p></div><span class="bike-yr">2015</span></div>
+      <div class="bike" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Dyna</p></div><span class="bike-yr">2008</span></div>
+      <div class="bike" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Dyna (diagnóstico elétrico)</p></div><span class="bike-yr">2008</span></div>
+      <div class="bike" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">FLHRC Road King Classic</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Softail</p></div><span class="bike-yr">2000-2005</span></div>
+      <div class="bike extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Softail</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Sportster</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike soon extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson · em processamento</p><p class="bike-md">Sportster 883 e 1200</p></div><span class="bike-yr">—</span></div>
+      <div class="bike extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Touring</p></div><span class="bike-yr">2006</span></div>
+      <div class="bike extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">Touring</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike soon extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson · em processamento</p><p class="bike-md">V-Rod</p></div><span class="bike-yr">2003</span></div>
+      <div class="bike extra" data-mk="harley-davidson"><div><p class="bike-mk">Harley-Davidson</p><p class="bike-md">V-Rod</p></div><span class="bike-yr">2008</span></div>
+      <div class="bike" data-mk="triumph"><div><p class="bike-mk">Triumph</p><p class="bike-md">Daytona 675</p></div><span class="bike-yr">2006-2007</span></div>
+      <div class="bike" data-mk="triumph"><div><p class="bike-mk">Triumph</p><p class="bike-md">Daytona 675</p></div><span class="bike-yr">2013</span></div>
+      <div class="bike soon" data-mk="triumph"><div><p class="bike-mk">Triumph · em processamento</p><p class="bike-md">Daytona 955i e Speed Triple</p></div><span class="bike-yr">2002</span></div>
+      <div class="bike" data-mk="triumph"><div><p class="bike-mk">Triumph</p><p class="bike-md">Rocket III</p></div><span class="bike-yr">2005</span></div>
+      <div class="bike soon extra" data-mk="triumph"><div><p class="bike-mk">Triumph · em processamento</p><p class="bike-md">Tiger 955i</p></div><span class="bike-yr">—</span></div>
+      <div class="bike soon" data-mk="suzuki"><div><p class="bike-mk">Suzuki · em processamento</p><p class="bike-md">GSX 1300R Hayabusa</p></div><span class="bike-yr">2008</span></div>
+      <div class="bike" data-mk="suzuki"><div><p class="bike-mk">Suzuki</p><p class="bike-md">GSX-R 1000</p></div><span class="bike-yr">2009</span></div>
+      <div class="bike" data-mk="suzuki"><div><p class="bike-mk">Suzuki</p><p class="bike-md">GSX-R 1000</p></div><span class="bike-yr">2022</span></div>
+      <div class="bike" data-mk="suzuki"><div><p class="bike-mk">Suzuki</p><p class="bike-md">GSX-R 750</p></div><span class="bike-yr">2007</span></div>
+      <div class="bike" data-mk="bmw"><div><p class="bike-mk">BMW</p><p class="bike-md">C1 200</p></div><span class="bike-yr">—</span></div>
+      <div class="bike" data-mk="bmw"><div><p class="bike-mk">BMW</p><p class="bike-md">F 650 GS</p></div><span class="bike-yr">—</span></div>
+      <div class="bike" data-mk="bmw"><div><p class="bike-mk">BMW</p><p class="bike-md">K 1100 LT/RS</p></div><span class="bike-yr">—</span></div>
+      <div class="bike soon" data-mk="honda"><div><p class="bike-mk">Honda · em processamento</p><p class="bike-md">CB 600F Hornet</p></div><span class="bike-yr">2008-2010</span></div>
+      <div class="bike soon" data-mk="honda"><div><p class="bike-mk">Honda · em processamento</p><p class="bike-md">CBR1000RR</p></div><span class="bike-yr">2008</span></div>
+    </div>
+    <button class="ver-todas" id="ver-todas">Ver as 99 motos do acervo</button>
+    <!-- ACERVO:FIM -->
+    <p class="acervo-note rv" data-d="1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="8"/></svg>
+      <span>89 manuais já estão liberados para pergunta e busca.
+      Os 10 marcados como “em processamento” são digitalizações antigas passando por reconhecimento de texto.
+      Não achou a sua moto? <a href="https://wa.me/5551989778977?text=Ol%C3%A1!%20Gostaria%20de%20pedir%20um%20manual%20para%20o%20Xtreme%20Manuais%20AI" target="_blank" rel="noopener" style="color:var(--red-hi)">peça pelo WhatsApp</a> — o acervo é ampliado conforme os pedidos.</span>
+    </p>
+  </div>
+</section>
+
+<!-- ══ PLANOS ═══════════════════════════════════════════════ -->
+<section class="section" id="planos">
+  <div class="wrap">
+    <p class="eyebrow rv">Planos</p>
+    <h2 class="rv" data-d="1">Escolha o seu acesso</h2>
+    <p class="lead rv" data-d="2" style="margin-top:16px">
+      Assinatura mensal, sem fidelidade. Cancele quando quiser — o acesso continua até o fim do período já pago.
+    </p>
+
+    <div class="plans">
+      <article class="plan rv" data-d="1">
+        <h3>Proprietário</h3>
+        <p class="plan-sub">Para quem tem a moto e quer cuidar dela com informação de fábrica.</p>
+        <div class="price"><b>R$ 30</b><i>/mês</i></div>
+        <p class="price-note">1 modelo do acervo, à sua escolha</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Manual de serviço completo da sua moto</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Perguntas ilimitadas, com página citada</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Busca por texto e página destacada</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> PDF original para abrir e imprimir</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Histórico das suas consultas</li>
+        </ul>
+        <a href="https://pay.kiwify.com.br/G73BOo2" class="btn btn--ghost btn--block" target="_blank" rel="noopener" data-cta="owner">Assinar Proprietário</a>
+      </article>
+
+      <article class="plan hot rv" data-d="2">
+        <span class="plan-flag">Para oficina</span>
+        <h3>Mecânico</h3>
+        <p class="plan-sub">Acervo inteiro liberado, para quem atende moto dos outros todo dia.</p>
+        <div class="price"><b>R$ 120</b><i>/mês</i></div>
+        <p class="price-note">Todos os 99 manuais + os que entrarem depois</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Acervo completo, todas as marcas e anos</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Troca de moto na hora, entre um serviço e outro</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Manuais novos entram sem custo adicional</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Envio de manual para indexação prioritária</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Suporte direto com a equipe Xtreme</li>
+        </ul>
+        <a href="https://pay.kiwify.com.br/72Jgy2b" class="btn btn--red btn--block" target="_blank" rel="noopener" data-cta="mechanic">Assinar Mecânico</a>
+      </article>
+    </div>
+
+    <p class="pay-note rv" data-d="3">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Pagamento processado pela Kiwify · Pix, cartão ou boleto · Após a confirmação você cria sua senha em
+      <a href="/ativar" style="color:var(--paper-2);text-decoration:underline">/ativar</a> e já entra no sistema.
+    </p>
+  </div>
+</section>
+
+<!-- ══ FAQ ══════════════════════════════════════════════════ -->
+<section class="section section--tight" id="faq">
+  <div class="wrap">
+    <p class="eyebrow rv">Dúvidas</p>
+    <h2 class="rv" data-d="1">Perguntas que a gente sempre ouve</h2>
+
+    <div class="faq rv" data-d="2">
+      <details>
+        <summary><span class="faq-n">01</span> A IA pode inventar uma resposta?<span class="pm"></span></summary>
+        <p class="faq-a">Ela não responde de memória: o sistema primeiro encontra as páginas do manual daquela
+          moto e a IA só pode usar o que está escrito ali. Além disso, toda resposta vem com a página citada —
+          se algum número parecer estranho, você abre a página e confere na hora. A regra da casa é simples:
+          o manual manda, o sistema só facilita o caminho até ele.</p>
+      </details>
+      <details>
+        <summary><span class="faq-n">02</span> Funciona no celular da oficina?<span class="pm"></span></summary>
+        <p class="faq-a">Funciona. A tela foi feita pensando em celular apoiado na bancada: lista de motos,
+          campo de pergunta e resposta com a página, tudo sem instalar aplicativo. Basta abrir o site e entrar
+          com o seu login.</p>
+      </details>
+      <details>
+        <summary><span class="faq-n">03</span> Os manuais são os de concessionária?<span class="pm"></span></summary>
+        <p class="faq-a">São manuais de serviço (service manual) — os de procedimento de oficina, com tabela de
+          torque, folgas, desmontagem e diagnóstico. A maior parte do acervo está em português; alguns títulos
+          estão no idioma original, e nesse caso o sistema busca no idioma do manual e responde para você em
+          português mesmo assim.</p>
+      </details>
+      <details>
+        <summary><span class="faq-n">04</span> Minha moto não está na lista. E aí?<span class="pm"></span></summary>
+        <p class="faq-a">Duas saídas: pedir pelo WhatsApp, ou enviar o PDF pelo próprio sistema, na opção de
+          sugerir manual. A equipe analisa, indexa e o manual passa a valer para todo mundo do plano Mecânico.
+          O acervo cresce exatamente assim, pelo que as oficinas pedem.</p>
+      </details>
+      <details>
+        <summary><span class="faq-n">05</span> No plano Proprietário, dá para trocar de moto?<span class="pm"></span></summary>
+        <p class="faq-a">O modelo é escolhido no primeiro acesso, dentro do sistema. Se você trocar de moto,
+          chama no WhatsApp que a gente ajusta o seu acesso. Quem mexe com moto diferente toda semana se dá
+          melhor no plano Mecânico, que já vem com o acervo inteiro.</p>
+      </details>
+      <details>
+        <summary><span class="faq-n">06</span> Como funciona o cancelamento?<span class="pm"></span></summary>
+        <p class="faq-a">A assinatura é mensal, sem fidelidade, e o cancelamento é feito pela própria Kiwify.
+          Cancelou, o acesso continua liberado até o fim do período que você já pagou — nada é cortado no meio
+          do mês.</p>
+      </details>
+      <details>
+        <summary><span class="faq-n">07</span> Preciso de internet o tempo todo?<span class="pm"></span></summary>
+        <p class="faq-a">Sim. A consulta é feita no servidor, então o celular ou computador precisa estar
+          conectado. Em compensação, nada ocupa espaço no aparelho e o acervo está sempre atualizado.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA FINAL ════════════════════════════════════════════ -->
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="cta rv">
+      <div>
+        <p class="eyebrow">Xtreme Mototech</p>
+        <h2>Coloque o manual para trabalhar a seu favor</h2>
+        <p>Assine, crie sua senha e faça a primeira pergunta ainda hoje. Se preferir conversar antes,
+          chama a gente no WhatsApp — quem responde é a equipe, não robô.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:240px">
+        <a href="#planos" class="btn btn--red btn--block">Assinar agora</a>
+        <a href="https://wa.me/5551989778977?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20o%20Xtreme%20Manuais%20AI" class="btn btn--ghost btn--block" target="_blank" rel="noopener">Falar com a equipe</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ RODAPÉ ═══════════════════════════════════════════════ -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <img class="foot-logo" src="/static/img/xtreme-logo-light.png" alt="Xtreme Mototech" width="499" height="108" />
+        <p>O Manuais AI é um produto da Xtreme Mototech, que fabrica e instala quickshifter, corta-giro
+          e ponteiras de escapamento para moto desde a bancada — e agora leva a mesma praticidade para a
+          consulta técnica.</p>
+        <p class="foot-slogan">Tecnologia e praticidade juntas</p>
+      </div>
+
+      <div>
+        <h4>Sistema</h4>
+        <ul>
+          <li><a href="#demo">Como funciona</a></li>
+          <li><a href="#acervo">Acervo de manuais</a></li>
+          <li><a href="#planos">Planos e preços</a></li>
+          <li><a href="/login">Entrar no sistema</a></li>
+          <li><a href="/ativar">Ativar compra</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Contato</h4>
+        <ul>
+          <li><a href="https://wa.me/5551989778977" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.9-2.9-1.6-4-3.6-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 1.7a8.3 8.3 0 0 1 6.4 13.6 8.3 8.3 0 0 1-11 1.4l-.4-.2-3 .8.8-2.9-.2-.4A8.3 8.3 0 0 1 12 3.7"/></svg>
+            (51) 98977-8977</a></li>
+          <li><a href="mailto:contact@xtrememoto.tech">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>
+            contact@xtrememoto.tech</a></li>
+          <li><a href="https://www.xtrememototech.com.br/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>
+            xtrememototech.com.br</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="legal">
+      <span>© <span id="ano">2026</span> Xtreme Mototech · Todos os direitos reservados</span>
+      <span class="mono">XTREME BRASIL INVENÇÕES LTDA · CNPJ 27.569.183/0001-17</span>
+    </div>
+  </div>
+</footer>
+
+<a class="wa" id="wa" href="https://wa.me/5551989778977?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20Xtreme%20Manuais%20AI" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.9-2.9-1.6-4-3.6-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2m0 1.7a8.3 8.3 0 0 1 6.4 13.6 8.3 8.3 0 0 1-11 1.4l-.4-.2-3 .8.8-2.9-.2-.4A8.3 8.3 0 0 1 12 3.7"/></svg>
+  <span>Falar no WhatsApp</span>
+</a>
+
+<script>
+(function(){
+  "use strict";
+  var slow = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ── ano ───────────────────────────────────────────────── */
+  document.getElementById("ano").textContent = new Date().getFullYear();
+
+  /* ── nav: estado ao rolar + barra de progresso ─────────── */
+  var nav = document.getElementById("nav"),
+      bar = document.getElementById("scrollbar"),
+      wa  = document.getElementById("wa"),
+      ticking = false;
+
+  function onScroll(){
+    var y = window.scrollY || document.documentElement.scrollTop,
+        h = document.documentElement.scrollHeight - window.innerHeight;
+    nav.classList.toggle("stuck", y > 20);
+    bar.style.width = (h > 0 ? (y / h) * 100 : 0) + "%";
+    wa.classList.toggle("in", y > 600);
+    ticking = false;
+  }
+  window.addEventListener("scroll", function(){
+    if (!ticking){ ticking = true; window.requestAnimationFrame(onScroll); }
+  }, {passive:true});
+  onScroll();
+
+  /* ── menu mobile ───────────────────────────────────────── */
+  var burger = document.getElementById("burger");
+  burger.addEventListener("click", function(){
+    var open = nav.classList.toggle("open");
+    burger.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  document.getElementById("navlinks").addEventListener("click", function(e){
+    if (e.target.tagName === "A"){ nav.classList.remove("open"); burger.setAttribute("aria-expanded","false"); }
+  });
+
+  /* ── revelação no scroll ───────────────────────────────── */
+  var rv = document.querySelectorAll(".rv");
+  if ("IntersectionObserver" in window && !slow){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, {rootMargin:"0px 0px -12% 0px", threshold:.08});
+    rv.forEach(function(el){ io.observe(el); });
+  } else {
+    rv.forEach(function(el){ el.classList.add("in"); });
+  }
+
+  /* ── contadores ────────────────────────────────────────── */
+  function runCount(el){
+    var alvo = parseInt(el.getAttribute("data-count"), 10),
+        dur  = 1400, t0 = null;
+    if (slow){ el.textContent = alvo.toLocaleString("pt-BR"); return; }
+    function tick(ts){
+      if (!t0) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1),
+          e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(alvo * e).toLocaleString("pt-BR");
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  var nums = document.querySelectorAll("[data-count]");
+  if ("IntersectionObserver" in window){
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){ runCount(en.target); io2.unobserve(en.target); }
+      });
+    }, {threshold:.6});
+    nums.forEach(function(el){ io2.observe(el); });
+  } else {
+    nums.forEach(runCount);
+  }
+
+  /* ── filtro do acervo ──────────────────────────────────── */
+  var filters = document.getElementById("filters"),
+      garage  = document.getElementById("garage"),
+      verTodas = document.getElementById("ver-todas"),
+      bikes   = Array.prototype.slice.call(document.querySelectorAll(".bike"));
+
+  filters.addEventListener("click", function(e){
+    var b = e.target.closest(".filt");
+    if (!b) return;
+    filters.querySelectorAll(".filt").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    var mk = b.getAttribute("data-mk");
+    bikes.forEach(function(card){
+      card.classList.toggle("hide", mk !== "all" && card.getAttribute("data-mk") !== mk);
+    });
+    aplicarCorte(mk);
+  });
+
+  /* O corte em 24 motos só vale na visão "Todas" e enquanto ninguém expandiu:
+     filtrar uma marca mostra a marca inteira. */
+  var expandido = false;
+  function aplicarCorte(mk){
+    if (!garage) return;
+    var cortar = !expandido && mk === "all";
+    garage.classList.toggle("compacto", cortar);
+    if (verTodas) verTodas.hidden = !cortar;
+  }
+
+  if (verTodas){
+    verTodas.addEventListener("click", function(){
+      expandido = true;
+      aplicarCorte("all");
+    });
+  }
+
+  /* ── FAQ: abre uma por vez ─────────────────────────────── */
+  var faqs = Array.prototype.slice.call(document.querySelectorAll(".faq details"));
+  faqs.forEach(function(d){
+    d.addEventListener("toggle", function(){
+      if (d.open) faqs.forEach(function(o){ if (o !== d) o.open = false; });
+    });
+  });
+
+  /* ══ DEMO: linha do tempo da consulta ═══════════════════ */
+  var demo = {
+    steps : Array.prototype.slice.call(document.querySelectorAll(".step")),
+    motos : Array.prototype.slice.call(document.querySelectorAll(".moto")),
+    panes : [document.getElementById("p0"), document.getElementById("p1"),
+             document.getElementById("p2"), document.getElementById("p3")],
+    ask   : document.getElementById("ask"),
+    askTxt: document.getElementById("askTxt"),
+    askBtn: document.getElementById("askBtn"),
+    title : document.getElementById("wTitle"),
+    sub   : document.getElementById("wSub"),
+    sheet : document.getElementById("sheet"),
+    cites : document.getElementById("cites"),
+    cite1 : document.getElementById("cite1"),
+    lines : Array.prototype.slice.call(document.querySelectorAll(".ans-line"))
+  };
+
+  var PERGUNTA = "qual o torque do parafuso de dreno do óleo?",
+      DUR      = [4200, 5200, 6000, 5200],   /* duração de cada passo */
+      timers   = [], passo = -1, rodando = false, visivel = false, pausadoAMao = false;
+
+  function limpar(){ timers.forEach(clearTimeout); timers = []; }
+  function em(ms, fn){ timers.push(setTimeout(fn, ms)); }
+
+  function pane(i){ demo.panes.forEach(function(p, n){ p.classList.toggle("on", n === i); }); }
+
+  function marcarPasso(i){
+    demo.steps.forEach(function(s, n){
+      s.classList.toggle("on", n === i);
+      s.style.setProperty("--dur", DUR[n] + "ms");
+    });
+  }
+
+  function reset(){
+    limpar();
+    demo.motos.forEach(function(m){ m.classList.remove("sel"); });
+    demo.askTxt.textContent = "Qual a sua dúvida sobre esta moto?";
+    demo.askTxt.classList.add("ph");
+    demo.ask.classList.remove("hot");
+    demo.askBtn.classList.remove("press");
+    demo.title.childNodes[0].nodeValue = "Selecione uma moto";
+    demo.sub.textContent = "Nenhum manual aberto";
+    demo.lines.forEach(function(l){ l.classList.remove("show"); });
+    demo.cites.classList.remove("show");
+    demo.cite1.classList.remove("pulse");
+    demo.sheet.classList.remove("on");
+    pane(0);
+  }
+
+  function escrever(txt, done){
+    var i = 0;
+    demo.askTxt.classList.remove("ph");
+    demo.askTxt.textContent = "";
+    (function passoTexto(){
+      if (i <= txt.length){
+        demo.askTxt.innerHTML = txt.slice(0, i).replace(/&/g,"&amp;").replace(/</g,"&lt;") +
+                                '<span class="caret"></span>';
+        i++;
+        timers.push(setTimeout(passoTexto, 32 + Math.random() * 45));
+      } else {
+        demo.askTxt.textContent = txt;
+        done && done();
+      }
+    })();
+  }
+
+  /* cada passo devolve o tempo até o próximo */
+  function tocar(i){
+    passo = i;
+    marcarPasso(i);
+
+    if (i === 0){                                   /* escolher a moto */
+      reset();
+      marcarPasso(0);
+      em(900, function(){
+        demo.motos[1].classList.add("sel");
+        demo.title.childNodes[0].nodeValue = "Yamaha MT-07 ";
+        demo.sub.textContent = "2016 · 485 páginas · manual de serviço";
+      });
+      em(1500, function(){ demo.ask.classList.add("hot"); });
+    }
+
+    if (i === 1){                                   /* digitar a pergunta */
+      demo.motos.forEach(function(m, n){ m.classList.toggle("sel", n === 1); });
+      demo.title.childNodes[0].nodeValue = "Yamaha MT-07 ";
+      demo.sub.textContent = "2016 · 485 páginas · manual de serviço";
+      demo.ask.classList.add("hot");
+      demo.lines.forEach(function(l){ l.classList.remove("show"); });
+      demo.cites.classList.remove("show");
+      demo.sheet.classList.remove("on");
+      pane(0);
+      em(300, function(){ escrever(PERGUNTA); });
+      em(4200, function(){ demo.askBtn.classList.add("press"); });
+      em(4500, function(){ demo.askBtn.classList.remove("press"); pane(1); });
+    }
+
+    if (i === 2){                                   /* resposta */
+      demo.askTxt.textContent = PERGUNTA;
+      demo.askTxt.classList.remove("ph");
+      demo.sheet.classList.remove("on");
+      pane(1);
+      em(1200, function(){ pane(2); });
+      demo.lines.forEach(function(l, n){
+        em(1400 + n * 700, function(){ l.classList.add("show"); });
+      });
+      em(3700, function(){ demo.cites.classList.add("show"); });
+      em(5000, function(){ demo.cite1.classList.add("pulse"); });
+    }
+
+    if (i === 3){                                   /* abrir a página */
+      demo.askTxt.textContent = PERGUNTA;
+      demo.lines.forEach(function(l){ l.classList.add("show"); });
+      demo.cites.classList.add("show");
+      demo.cite1.classList.add("pulse");
+      pane(2);
+      em(500, function(){ pane(3); demo.sheet.classList.add("on"); });
+    }
+
+    if (rodando) em(DUR[i], function(){ tocar((i + 1) % 4); });
+  }
+
+  function play(){
+    if (rodando) return;
+    rodando = true;
+    document.getElementById("playLab").textContent = "Pausar";
+    document.getElementById("playIco").innerHTML =
+      '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>';
+    tocar(passo < 0 ? 0 : passo);
+  }
+  function pause(){
+    rodando = false;
+    limpar();
+    document.getElementById("playLab").textContent = "Continuar";
+    document.getElementById("playIco").innerHTML = '<polygon points="6 3 20 12 6 21 6 3"/>';
+  }
+
+  document.getElementById("playBtn").addEventListener("click", function(){
+    pausadoAMao = rodando;          /* pausa manual não é desfeita ao rolar a página */
+    rodando ? pause() : play();
+  });
+
+  /* clicar num passo salta para ele */
+  document.getElementById("steps").addEventListener("click", function(e){
+    var s = e.target.closest(".step");
+    if (!s) return;
+    limpar();
+    var alvo = parseInt(s.getAttribute("data-step"), 10);
+    if (alvo === 0) reset();
+    tocar(alvo);
+  });
+
+  /* só roda quando a janela está na tela */
+  if ("IntersectionObserver" in window){
+    var io3 = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        visivel = en.isIntersecting;
+        if (visivel && !rodando && !slow && !pausadoAMao) play();
+        else if (!visivel && rodando){ rodando = false; limpar(); }
+      });
+    }, {threshold:.25});
+    io3.observe(document.getElementById("win"));
+  }
+
+  if (slow){                       /* sem animação: mostra o estado final */
+    reset();
+    demo.motos[1].classList.add("sel");
+    demo.title.childNodes[0].nodeValue = "Yamaha MT-07 ";
+    demo.sub.textContent = "2016 · 485 páginas · manual de serviço";
+    demo.askTxt.textContent = PERGUNTA;
+    demo.askTxt.classList.remove("ph");
+    demo.lines.forEach(function(l){ l.classList.add("show"); });
+    demo.cites.classList.add("show");
+    marcarPasso(2);
+    pane(2);
+  }
+})();
+</script>
+</body>
+</html>

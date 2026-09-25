@@ -10,6 +10,7 @@ import os
 import secrets
 import sqlite3
 import time
+from datetime import datetime, timezone
 
 import jwt
 from fastapi import Depends, HTTPException, Request
@@ -71,10 +72,26 @@ def _decode_token(token: str) -> str | None:
 
 def get_user(con: sqlite3.Connection, username: str) -> dict | None:
     row = con.execute(
-        "SELECT id, username, is_admin, plan_id, plan_manual_id FROM users WHERE username = ?",
+        "SELECT id, username, is_admin, plan_id, plan_manual_id, email, "
+        "plan_expires_at, plan_status, pending_activation FROM users WHERE username = ?",
         (username,),
     ).fetchone()
     return dict(row) if row else None
+
+
+def plan_is_active(user: dict) -> bool:
+    """Admin sempre entra. Sem plano, nao entra. Com plano, respeita a validade.
+
+    plan_expires_at NULL = sem validade (plano liberado na mao pelo admin).
+    """
+    if user.get("is_admin"):
+        return True
+    if not user.get("plan_id"):
+        return False
+    expires_at = user.get("plan_expires_at")
+    if not expires_at:
+        return True
+    return expires_at >= datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 
@@ -94,5 +111,12 @@ def get_current_user(request: Request) -> dict:
 def get_current_admin_user(user: dict = Depends(get_current_user)) -> dict:
     if not user.get("is_admin"):
         raise HTTPException(403, "Acesso restrito a administradores")
+    return user
+
+def get_current_active_user(user: dict = Depends(get_current_user)) -> dict:
+    if not plan_is_active(user):
+        if user.get("plan_id"):
+            raise HTTPException(403, "Sua assinatura expirou. Renove para continuar acessando.")
+        raise HTTPException(403, "Plano inativo ou não selecionado. Finalize o pagamento para acessar.")
     return user
 

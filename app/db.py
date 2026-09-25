@@ -35,17 +35,26 @@ def ensure_users_table() -> None:
         """
     )
 
+    # Colunas do Kiwify na tabela de planos
+    plan_columns = [row[1] for row in con.execute("PRAGMA table_info(plans)").fetchall()]
+    if "kiwify_plan_id" not in plan_columns:
+        # id da assinatura no Kiwify — e' o que identifica o plano no webhook,
+        # porque os dois planos compartilham o mesmo product_id
+        con.execute("ALTER TABLE plans ADD COLUMN kiwify_plan_id TEXT")
+    if "kiwify_checkout_url" not in plan_columns:
+        con.execute("ALTER TABLE plans ADD COLUMN kiwify_checkout_url TEXT")
+
     # Inserir planos padrao se ainda nao existem
     existing_slugs = [r[0] for r in con.execute("SELECT slug FROM plans").fetchall()]
     if "owner" not in existing_slugs:
         con.execute(
             "INSERT INTO plans (name, slug, price, description, max_manuals) VALUES (?, ?, ?, ?, ?)",
-            ("Proprietário", "owner", 15.90, "Acesso a 1 modelo específico do acervo", 1),
+            ("Proprietário", "owner", 30.00, "Acesso a 1 modelo específico do acervo", 1),
         )
     if "mechanic" not in existing_slugs:
         con.execute(
             "INSERT INTO plans (name, slug, price, description, max_manuals) VALUES (?, ?, ?, ?, ?)",
-            ("Mecânico", "mechanic", 69.90, "Acesso completo a todos os manuais do acervo", None),
+            ("Mecânico", "mechanic", 120.00, "Acesso completo a todos os manuais do acervo", None),
         )
 
     # --- Tabela de usuarios ---
@@ -70,6 +79,20 @@ def ensure_users_table() -> None:
     if "plan_manual_id" not in columns:
         # Para usuarios com plano Proprietario: qual manual especifico podem acessar
         con.execute("ALTER TABLE users ADD COLUMN plan_manual_id TEXT")
+    if "email" not in columns:
+        # Email da compra no Kiwify — usado para casar o webhook com o usuario
+        con.execute("ALTER TABLE users ADD COLUMN email TEXT")
+    if "plan_expires_at" not in columns:
+        # Validade da assinatura (NULL = sem validade, liberado manualmente pelo admin)
+        con.execute("ALTER TABLE users ADD COLUMN plan_expires_at TEXT")
+    if "plan_status" not in columns:
+        con.execute("ALTER TABLE users ADD COLUMN plan_status TEXT")
+    if "pending_activation" not in columns:
+        # Conta criada pelo webhook (compra sem cadastro previo): sem senha ate ativar
+        con.execute("ALTER TABLE users ADD COLUMN pending_activation INTEGER NOT NULL DEFAULT 0")
+    if "cpf_last4" not in columns:
+        con.execute("ALTER TABLE users ADD COLUMN cpf_last4 TEXT")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
 
     # --- Tabela de submissoes ---
     con.execute(
@@ -120,6 +143,51 @@ def ensure_users_table() -> None:
         con.execute("ALTER TABLE usage_logs ADD COLUMN references_json TEXT")
     except sqlite3.OperationalError:
         pass  # coluna já existe
+
+    # --- Tabela de pagamentos (Kiwify) ---
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            billing_id TEXT UNIQUE NOT NULL,
+            user_id INTEGER NOT NULL,
+            plan_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY(user_id) REFERENCES users(id),
+            FOREIGN KEY(plan_id) REFERENCES plans(id)
+        )
+        """
+    )
+    payment_columns = [row[1] for row in con.execute("PRAGMA table_info(payments)").fetchall()]
+    if "kiwify_order_id" not in payment_columns:
+        con.execute("ALTER TABLE payments ADD COLUMN kiwify_order_id TEXT")
+    if "kiwify_subscription_id" not in payment_columns:
+        con.execute("ALTER TABLE payments ADD COLUMN kiwify_subscription_id TEXT")
+    if "updated_at" not in payment_columns:
+        con.execute("ALTER TABLE payments ADD COLUMN updated_at TEXT")
+    con.execute("CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(kiwify_order_id)")
+
+    # --- Webhooks recebidos: idempotencia + auditoria ---
+    # event_key = order_id:evento:updated_at. O Kiwify reenvia o mesmo evento
+    # ate receber 200, entao o mesmo payload pode chegar varias vezes.
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS webhook_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_key TEXT UNIQUE NOT NULL,
+            event_type TEXT,
+            order_id TEXT,
+            order_status TEXT,
+            user_id INTEGER,
+            plan_id INTEGER,
+            action TEXT,
+            detail TEXT,
+            payload TEXT,
+            received_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        """
+    )
 
     con.commit()
     con.close()

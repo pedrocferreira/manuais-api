@@ -3,6 +3,7 @@ const state = {
   activeManual: null,
   activeTab: "ask", // "ask" | "search"
   currentUser: null,
+  currentAnswerContext: null,
 };
 
 const el = {
@@ -30,6 +31,10 @@ async function api(path, options = {}) {
   if (res.status === 401) {
     window.location.href = "/login";
     throw new Error("unauthenticated");
+  }
+  if (res.status === 403) {
+    window.location.href = "/checkout";
+    throw new Error("payment required");
   }
   return res;
 }
@@ -258,7 +263,12 @@ function renderManualList() {
   }
 
   el.manualList.innerHTML = "";
-  const brands = Object.keys(groups).sort();
+  // Ordem natural: sem isso "Ninja 1000" viria antes de "Ninja 250" e
+  // "ZX-10R" antes de "ZX-6R", porque o padrao compara caractere a caractere.
+  const porNome = (a, b) =>
+    `${a.model} ${a.year}`.localeCompare(`${b.model} ${b.year}`, "pt-BR", { numeric: true });
+  const brands = Object.keys(groups).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  for (const b of brands) groups[b].sort(porNome);
   if (brands.length === 0) {
     el.manualList.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem;">Nenhuma moto encontrada.</p>';
     return;
@@ -435,11 +445,22 @@ async function runAsk(manualId) {
       body: JSON.stringify({ question }),
     });
     const data = await res.json();
+
+    state.currentAnswerContext = {
+      manual: state.activeManual,
+      question: question,
+      answer: data.answer,
+      references: data.references || [],
+      terms: data.terms || [],
+    };
+
     let html = "";
     if (data.message) {
       html += `<div class="notice ${data.mode === "search" ? "info" : "warn"}">${escapeHtml(data.message)}</div>`;
     }
     if (data.answer) {
+      const refCount = (data.references || []).length;
+      html += renderAnswerToolbar(refCount > 0, refCount);
       html += renderAnswerHtml(data);
     }
     html += renderReferences(data.references || []);
@@ -451,6 +472,45 @@ async function runAsk(manualId) {
   } finally {
     btn.disabled = false;
   }
+}
+
+function renderAnswerToolbar(hasReferences, pageCount) {
+  const printLabel = pageCount > 0
+    ? `🖨️ Imprimir Resposta & Páginas (${pageCount})`
+    : `🖨️ Imprimir Relatório`;
+
+  return `
+    <div class="answer-toolbar">
+      <div class="answer-toolbar-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+        Resposta Técnica
+      </div>
+      <div class="answer-toolbar-actions">
+        <button class="btn-print-main" onclick="printFullReport(this)" title="Imprimir resposta técnica e anexar as páginas do PDF em alta resolução">
+          ${printLabel}
+        </button>
+        ${hasReferences ? `
+          <button class="btn-tool" onclick="printTextOnly(this)" title="Imprimir somente o texto da resposta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            Apenas Resposta
+          </button>
+        ` : ''}
+        <button class="btn-tool" onclick="copyAnswerText(this)" title="Copiar resposta para a área de transferência">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Copiar
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 async function runSearch(manualId) {
@@ -482,9 +542,6 @@ function renderAnswerHtml(data) {
   text = text.replace(/\n*\*{0,2}\s*PAGINAS\s*:[\d,\s]+\*{0,2}\s*$/i, "").trimEnd();
 
   // Converte referencias brutas de pagina para links markdown:
-  // Suporta: [p. 119], [p. 119, 294], [p. 119, p. 294, p. 295],
-  //          [pág. 44], [pp. 44, 119], [p 119], etc.
-  // Estrategia: qualquer colchete que comece com prefixo de pagina E contenha numeros.
   text = text.replace(/\[\s*(?:p[aá]g(?:inas?)?|pp?)[\.\s]*([\d][\d\s,\.p]*?)\s*\](?!\()/gi, (match) => {
     const pages = match.match(/\d+/g) || [];
     if (pages.length === 0) return match;
@@ -544,7 +601,12 @@ function renderReferences(refs) {
       <div class="ref-body">
         <div class="ref-top">
           <span class="page-tag">Página ${r.page}${r.cited ? " · citada na resposta" : ""}</span>
-          <a class="open-pdf" href="${r.pdf_url}" target="_blank" rel="noopener">Abrir PDF →</a>
+          <div class="ref-actions">
+            <button class="btn-print-page" onclick="printSinglePage(${r.page})" title="Imprimir página ${r.page} do manual">
+              🖨️ Imprimir pág. ${r.page}
+            </button>
+            <a class="open-pdf" href="${r.pdf_url}" target="_blank" rel="noopener">Abrir PDF →</a>
+          </div>
         </div>
         <div class="snippet">${escapeHtml(r.snippet || "")}</div>
       </div>
@@ -586,9 +648,13 @@ function closeLightbox() {
 }
 
 function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 // ── Voice Input ──────────────────────────────────────────────────────────────
@@ -821,6 +887,14 @@ window.showCachedAnswer = async function(btnEl) {
     const res = await api(`/manuals/${q.manual_id}`);
     state.activeManual = await res.json();
   }
+
+  state.currentAnswerContext = {
+    manual: state.activeManual,
+    question: q.question,
+    answer: q.answer,
+    references: q.references || [],
+    terms: [],
+  };
   
   // Muda para a aba ask e renderiza
   state.activeTab = "ask";
@@ -846,14 +920,220 @@ window.showCachedAnswer = async function(btnEl) {
       };
       
       let html = "";
+      const refCount = (q.references || []).length;
+      html += renderAnswerToolbar(refCount > 0, refCount);
       html += renderAnswerHtml(data);
       html += renderReferences(q.references || []);
       resultBox.innerHTML = html;
-      
-      // Remove the lead class from previous requests if needed, but it's handled by renderAnswerHtml
     }
   }, 100);
 };
+
+// ── Print & Export Execution ───────────────────────────────────────────────
+
+window.printFullReport = async function(btnEl) {
+  if (!state.currentAnswerContext) return;
+  await executePrint({ mode: "full", btnEl });
+};
+
+window.printTextOnly = async function(btnEl) {
+  if (!state.currentAnswerContext) return;
+  await executePrint({ mode: "text-only", btnEl });
+};
+
+window.printSinglePage = async function(pageNumber) {
+  if (!state.currentAnswerContext && state.activeManual) {
+    state.currentAnswerContext = {
+      manual: state.activeManual,
+      question: "",
+      answer: "",
+      references: [{ page: pageNumber }],
+      terms: [],
+    };
+  }
+  await executePrint({ mode: "single-page", pageNumber });
+};
+
+window.copyAnswerText = function(btnEl) {
+  if (!state.currentAnswerContext?.answer) return;
+  const rawText = state.currentAnswerContext.answer
+    .replace(/\n*\*{0,2}\s*PAGINAS\s*:[\d,\s]+\*{0,2}\s*$/i, "")
+    .trim();
+
+  const manual = state.currentAnswerContext.manual || state.activeManual;
+  const prefix = manual ? `*${manual.brand} ${manual.model} (${manual.year})*\n` : "";
+  const question = state.currentAnswerContext.question ? `*Pergunta:* ${state.currentAnswerContext.question}\n\n` : "";
+  const fullTextToCopy = `${prefix}${question}${rawText}\n\n_Fonte: Manuais de Serviço_`;
+
+  navigator.clipboard.writeText(fullTextToCopy).then(() => {
+    if (btnEl) {
+      const origHtml = btnEl.innerHTML;
+      btnEl.classList.add("copied");
+      btnEl.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Copiado!
+      `;
+      setTimeout(() => {
+        btnEl.classList.remove("copied");
+        btnEl.innerHTML = origHtml;
+      }, 2200);
+    }
+  }).catch(() => {
+    alert("Não foi possível copiar o texto automaticamente.");
+  });
+};
+
+async function executePrint({ mode, pageNumber, btnEl }) {
+  const ctx = state.currentAnswerContext;
+  if (!ctx) return;
+
+  const printArea = document.getElementById("print-area");
+  if (!printArea) return;
+
+  let origBtnText = "";
+  if (btnEl) {
+    origBtnText = btnEl.innerHTML;
+    btnEl.classList.add("loading");
+    btnEl.innerHTML = `
+      <span class="spinner" style="width:13px;height:13px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:5px;"></span>
+      Preparando impressão…
+    `;
+  }
+
+  try {
+    const manual = ctx.manual || state.activeManual || {};
+    const question = ctx.question || "";
+    const answerMarkdown = ctx.answer || "";
+    const references = ctx.references || [];
+    const terms = ctx.terms || [];
+
+    const now = new Date();
+    const dateFormatted = now.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }) + " às " + now.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    let pagesToPrint = [];
+    if (mode === "full") {
+      const seen = new Set();
+      for (const r of references) {
+        if (r && r.page && !seen.has(r.page)) {
+          seen.add(r.page);
+          pagesToPrint.push(r);
+        }
+      }
+      // Ordena por número de página
+      pagesToPrint.sort((a, b) => a.page - b.page);
+    } else if (mode === "single-page" && pageNumber) {
+      const found = references.find(r => r.page === pageNumber) || { page: pageNumber };
+      pagesToPrint = [found];
+    }
+
+    // Processa markdown da resposta para o relatório de impressão
+    let answerHtml = "";
+    if (mode !== "single-page" && answerMarkdown) {
+      answerHtml = renderAnswerHtml({ answer: answerMarkdown, manual_id: manual.id });
+    }
+
+    // Monta o bloco das páginas anexas
+    let pagesHtml = "";
+    if (pagesToPrint.length > 0) {
+      pagesHtml = `
+        <div class="print-pages-section">
+          ${pagesToPrint.map((p, idx) => {
+            const highResImg = `/manuals/${manual.id}/pages/${p.page}/image?zoom=2.0${terms.length ? `&highlight=${encodeURIComponent(terms.join(','))}` : ''}`;
+            return `
+              <div class="print-page-item ${idx > 0 || mode === 'full' ? 'print-page-break' : ''}">
+                <div class="print-page-header">
+                  <span>📖 Página ${p.page} — Manual de Serviço: ${escapeHtml(manual.brand || '')} ${escapeHtml(manual.model || '')} (${escapeHtml(manual.year || '')})</span>
+                  <span>Anexo Técnico</span>
+                </div>
+                <div class="print-page-img-wrap">
+                  <img class="print-page-img" src="${highResImg}" alt="Página ${p.page} do Manual" />
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    printArea.innerHTML = `
+      <div class="print-document">
+        <header class="print-header">
+          <div class="print-header-top">
+            <div class="print-brand">🔧 Manuais de Serviço — Relatório Técnico</div>
+            <div class="print-date">Emitido em: ${dateFormatted}</div>
+          </div>
+          <div class="print-meta-grid">
+            <div class="print-meta-item">
+              <strong>Motocicleta:</strong> ${escapeHtml(manual.brand || '')} ${escapeHtml(manual.model || '')} ${manual.year ? `(${escapeHtml(manual.year)})` : ''}
+            </div>
+            <div class="print-meta-item">
+              <strong>Documento Técnico:</strong> Manual de Serviço Oficial
+            </div>
+          </div>
+          ${question ? `
+            <div class="print-question-box">
+              <strong>Pergunta do Mecânico:</strong>
+              ${escapeHtml(question)}
+            </div>
+          ` : ''}
+        </header>
+
+        ${mode !== 'single-page' && answerHtml ? `
+          <div class="print-section-title">1. Resposta Técnica & Especificações</div>
+          <div class="print-answer">
+            ${answerHtml}
+          </div>
+        ` : ''}
+
+        ${pagesToPrint.length > 0 ? `
+          <div class="print-section-title" style="${mode === 'single-page' ? '' : 'page-break-before: always; break-before: page;'}">
+            ${mode === 'single-page' ? `Página ${pagesToPrint[0].page} do Manual de Serviço` : `2. Páginas de Referência do Manual (${pagesToPrint.map(p => 'pág. ' + p.page).join(', ')})`}
+          </div>
+          ${pagesHtml}
+        ` : ''}
+
+        <footer class="print-footer">
+          <span>Relatório Técnico para uso em bancada / oficina • Manuais de Serviço</span>
+          <span>Consulte sempre os procedimentos de segurança do fabricante</span>
+        </footer>
+      </div>
+    `;
+
+    // Pré-carrega todas as imagens de páginas antes de disparar window.print()
+    const printImages = Array.from(printArea.querySelectorAll("img"));
+    if (printImages.length > 0) {
+      await Promise.all(printImages.map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve; // Não trava se alguma imagem falhar
+        });
+      }));
+    }
+
+    // Pequeno delay para cálculo do layout pelo motor de renderização do navegador
+    await new Promise(r => setTimeout(r, 150));
+
+    window.print();
+  } catch (err) {
+    console.error("Erro ao imprimir:", err);
+    alert("Erro ao preparar documento de impressão.");
+  } finally {
+    if (btnEl) {
+      btnEl.classList.remove("loading");
+      btnEl.innerHTML = origBtnText;
+    }
+  }
+}
 
 init();
 

@@ -13,11 +13,11 @@ from datetime import datetime
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import auth, db, indexer, pages, rag, search
+from . import auth, db, indexer, pages, payment, rag, search
 
 STATIC_DIR = db.BASE / "app" / "static"
 
@@ -56,6 +56,9 @@ else:
 con.commit()
 con.close()
 
+# Espelha nos planos locais os links/ids/precos configurados no Kiwify
+payment.sync_plans_from_config()
+
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -72,6 +75,13 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
+    email: str | None = None
+
+
+class ActivateRequest(BaseModel):
+    email: str
+    password: str
+    cpf_last4: str | None = None
 
 
 class RejectSubmissionRequest(BaseModel):
@@ -95,9 +105,25 @@ class SelectManualRequest(BaseModel):
     manual_id: str
 
 
+class CheckoutRequest(BaseModel):
+    plan_slug: str
+
+
+@app.get("/sales")
+def sales_page():
+    """Pagina antiga de planos: a venda agora e' a landing page da raiz."""
+    return RedirectResponse("/")
+
+
 @app.get("/login")
 def login_page():
     return FileResponse(STATIC_DIR / "login.html")
+
+
+@app.get("/ativar")
+def activate_page():
+    """Pagina de ativacao para quem comprou no Kiwify sem ter conta."""
+    return FileResponse(STATIC_DIR / "activate.html")
 
 
 @app.get("/admin")
@@ -114,7 +140,7 @@ def admin_page(request: Request):
             content="""<!doctype html><html><head><title>Acesso Restrito</title>
             <style>body{background:#0b0d14;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
             .card{background:#1a1e29;padding:40px;border-radius:16px;text-align:center;}
-            a{color:#ff7a1a;text-decoration:none;font-weight:bold;}</style></head>
+            a{color:#e21c1f;text-decoration:none;font-weight:bold;}</style></head>
             <body><div class="card"><h1>⛔ Acesso Restrito</h1><p>Esta área é exclusiva para administradores.</p>
             <p><a href="/">← Voltar para o Sistema Principal</a></p></div></body></html>""",
             status_code=403,
@@ -132,16 +158,22 @@ def register(body: RegisterRequest):
     if len(password) < 4:
         raise HTTPException(400, "A senha deve ter pelo menos 4 caracteres")
 
+    email = (body.email or "").strip().lower() or None
+    if email and "@" not in email:
+        raise HTTPException(400, "E-mail inválido")
+
     con = db.get_con()
-    existing = con.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+    existing = con.execute("SELECT id, pending_activation FROM users WHERE username = ?", (username,)).fetchone()
     if existing:
         con.close()
+        if existing["pending_activation"]:
+            raise HTTPException(400, "Já existe uma compra com este e-mail. Ative sua conta em /ativar")
         raise HTTPException(400, "Este nome de usuário já está cadastrado")
 
     password_hash = auth.hash_password(password)
     cur = con.execute(
-        "INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, 0)",
-        (username, password_hash),
+        "INSERT INTO users (username, password_hash, is_admin, email) VALUES (?, ?, 0, ?)",
+        (username, password_hash, email or (username if "@" in username else None)),
     )
     con.commit()
     con.close()
@@ -157,10 +189,30 @@ def register(body: RegisterRequest):
 
 @app.get("/")
 def index(request: Request):
+    """Visitante ve a landing page; quem tem sessao valida cai direto no app."""
+    token = request.cookies.get(auth.COOKIE_NAME)
+    if not token:
+        return FileResponse(STATIC_DIR / "lp.html", headers={"Cache-Control": "no-store"})
+    username = auth._decode_token(token)
+    if not username:
+        return FileResponse(STATIC_DIR / "lp.html", headers={"Cache-Control": "no-store"})
+
+    con = db.get_con()
+    user = auth.get_user(con, username)
+    con.close()
+
+    # Sem plano ou com assinatura vencida: manda pagar
+    if user and not auth.plan_is_active(user):
+        return RedirectResponse("/checkout")
+
+    return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-store"})
+
+@app.get("/checkout")
+def checkout_page(request: Request):
     token = request.cookies.get(auth.COOKIE_NAME)
     if not token or not auth._decode_token(token):
-        return FileResponse(STATIC_DIR / "login.html")
-    return FileResponse(STATIC_DIR / "index.html")
+        return RedirectResponse("/")
+    return FileResponse(STATIC_DIR / "checkout.html")
 
 
 @app.post("/auth/login")
@@ -198,7 +250,7 @@ def _get_manual_or_404(manual_id: str) -> dict:
 
 
 @app.get("/manuals")
-def list_manuals(brand: str | None = None, user: dict = Depends(auth.get_current_user)):
+def list_manuals(brand: str | None = None, user: dict = Depends(auth.get_current_active_user)):
     con = db.get_con()
     # Filtro por plano: se usuario tem plano_manual_id definido, retorna apenas aquele manual
     if not user.get("is_admin") and user.get("plan_manual_id"):
@@ -217,14 +269,14 @@ def list_manuals(brand: str | None = None, user: dict = Depends(auth.get_current
 
 
 @app.get("/manuals/{manual_id}")
-def get_manual(manual_id: str, user: dict = Depends(auth.get_current_user)):
+def get_manual(manual_id: str, user: dict = Depends(auth.get_current_active_user)):
     m = _get_manual_or_404(manual_id)
     return m | {"searchable": bool(m["indexed"])}
 
 
 @app.get("/manuals/{manual_id}/search")
 def search_manual(manual_id: str, q: str = Query(min_length=2), limit: int = Query(10, le=50),
-                   user: dict = Depends(auth.get_current_user)):
+                   user: dict = Depends(auth.get_current_active_user)):
     manual = _get_manual_or_404(manual_id)
     if not manual["indexed"]:
         raise HTTPException(422, "Este manual e escaneado (sem texto) e ainda nao foi indexado com OCR.")
@@ -248,7 +300,7 @@ def search_manual(manual_id: str, q: str = Query(min_length=2), limit: int = Que
 
 
 @app.post("/manuals/{manual_id}/ask")
-def ask_manual(manual_id: str, body: AskRequest, user: dict = Depends(auth.get_current_user)):
+def ask_manual(manual_id: str, body: AskRequest, user: dict = Depends(auth.get_current_active_user)):
     manual = _get_manual_or_404(manual_id)
     if not manual["indexed"]:
         raise HTTPException(422, "Este manual e escaneado (sem texto) e ainda nao foi indexado com OCR.")
@@ -294,7 +346,7 @@ def ask_manual(manual_id: str, body: AskRequest, user: dict = Depends(auth.get_c
 def get_page_image(manual_id: str, page: int,
                    highlight: str | None = Query(None, description="termos separados por virgula"),
                    zoom: float = Query(2.0, ge=1.0, le=4.0),
-                   user: dict = Depends(auth.get_current_user)):
+                   user: dict = Depends(auth.get_current_active_user)):
     manual = _get_manual_or_404(manual_id)
     terms = [t.strip() for t in highlight.split(",")] if highlight else []
     try:
@@ -306,7 +358,7 @@ def get_page_image(manual_id: str, page: int,
 
 
 @app.get("/manuals/{manual_id}/pdf")
-def get_pdf(manual_id: str, user: dict = Depends(auth.get_current_user)):
+def get_pdf(manual_id: str, user: dict = Depends(auth.get_current_active_user)):
     manual = _get_manual_or_404(manual_id)
     path = db.MANUALS_DIR / manual["file"]
     if not path.exists():
@@ -318,13 +370,13 @@ def get_pdf(manual_id: str, user: dict = Depends(auth.get_current_user)):
 # --- FLUXO DE SUBMISSÃO DE MANUAIS POR USUÁRIOS ---
 
 @app.post("/submissions")
-
-async def submit_manual(
+def submit_manual(
+    title: str = Form(...),
     brand: str = Form(...),
     model: str = Form(...),
     year: str = Form(...),
     file: UploadFile = File(...),
-    user: dict = Depends(auth.get_current_user),
+    user: dict = Depends(auth.get_current_active_user),
 ):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Apenas arquivos PDF são permitidos")
@@ -332,7 +384,8 @@ async def submit_manual(
     unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
     save_path = db.PENDING_DIR / unique_filename
     
-    content = await file.read()
+    # Nota: Em versões assíncronas do FastAPI, file.read() deve ser awaited
+    content = file.file.read()
     save_path.write_bytes(content)
     
     con = db.get_con()
@@ -351,8 +404,7 @@ async def submit_manual(
 
 
 @app.get("/submissions/mine")
-
-def my_submissions(user: dict = Depends(auth.get_current_user)):
+def my_submissions(user: dict = Depends(auth.get_current_active_user)):
     con = db.get_con()
     rows = con.execute(
         "SELECT * FROM manual_submissions WHERE user_id = ? ORDER BY submitted_at DESC", (user["id"],)
@@ -603,10 +655,112 @@ def set_user_plan(user_id: int, body: SetPlanRequest, admin: dict = Depends(auth
     return {"ok": True, "message": "Plano atualizado."}
 
 
+# --- CHECKOUT E WEBHOOK (KIWIFY) ---
+
+@app.post("/api/checkout")
+def create_checkout_session(body: CheckoutRequest, request: Request, user: dict = Depends(auth.get_current_user)):
+    try:
+        base_url = str(request.base_url).rstrip("/")
+        url = payment.create_checkout(
+            user["id"],
+            body.plan_slug,
+            return_url=f"{base_url}/",
+            email=user.get("email"),
+        )
+        return {"ok": True, "checkout_url": url}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Erro interno ao gerar checkout: {e}")
+
+
+@app.post("/api/webhooks/kiwify")
+async def kiwify_webhook(request: Request):
+    """Recebe os eventos de venda do Kiwify.
+
+    Responde 401 quando a assinatura nao confere e 500 quando o processamento
+    falha, para o Kiwify reenviar o evento em vez de marcar como entregue.
+    """
+    body = await request.body()
+    try:
+        result = payment.process_webhook(body, request.query_params)
+    except Exception as e:
+        print(f"[kiwify] erro inesperado no webhook: {e}")
+        return JSONResponse({"status": "error", "detail": str(e)}, status_code=500)
+
+    print(f"[kiwify] {result['action']}: {result['detail']}")
+    if result["action"] == "rejected":
+        return JSONResponse({"status": "rejected", "detail": result["detail"]}, status_code=401)
+    if not result["ok"]:
+        return JSONResponse({"status": "error", "detail": result["detail"]}, status_code=500)
+    return {"status": "ok", "action": result["action"]}
+
+
+@app.post("/auth/activate")
+def activate_account(body: ActivateRequest):
+    """Define a senha de quem comprou no Kiwify sem ter conta no sistema."""
+    email = body.email.strip().lower()
+    if len(body.password) < 4:
+        raise HTTPException(400, "A senha deve ter pelo menos 4 caracteres")
+
+    con = db.get_con()
+    row = con.execute(
+        "SELECT id, username, cpf_last4 FROM users WHERE lower(email) = ? AND pending_activation = 1",
+        (email,),
+    ).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, "Nenhuma compra pendente de ativação para este e-mail.")
+
+    # Se o Kiwify mandou o CPF, exige os 4 ultimos digitos para ninguem
+    # tomar a conta so' sabendo o e-mail da pessoa
+    if row["cpf_last4"]:
+        informed = "".join(ch for ch in (body.cpf_last4 or "") if ch.isdigit())
+        if informed != row["cpf_last4"]:
+            con.close()
+            raise HTTPException(403, "Os 4 últimos dígitos do CPF não conferem com os da compra.")
+
+    con.execute(
+        "UPDATE users SET password_hash = ?, pending_activation = 0 WHERE id = ?",
+        (auth.hash_password(body.password), row["id"]),
+    )
+    con.commit()
+    con.close()
+
+    token = auth.create_token(row["username"])
+    response = JSONResponse({"ok": True, "username": row["username"]})
+    response.set_cookie(
+        auth.COOKIE_NAME, token, httponly=True, samesite="lax", max_age=auth.TOKEN_TTL_SECONDS,
+    )
+    return response
+
+
+@app.get("/api/admin/kiwify/status")
+def kiwify_status(admin: dict = Depends(auth.get_current_admin_user)):
+    """Confere a configuracao local contra o que esta' cadastrado no Kiwify."""
+    try:
+        return payment.diagnostics()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/admin/kiwify/events")
+def kiwify_events(limit: int = Query(50, le=200), admin: dict = Depends(auth.get_current_admin_user)):
+    """Ultimos webhooks recebidos — para depurar compra que nao liberou acesso."""
+    con = db.get_con()
+    rows = con.execute(
+        "SELECT id, event_key, event_type, order_id, order_status, user_id, plan_id, action, detail, received_at "
+        "FROM webhook_events ORDER BY id DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
 # --- ROTA PARA USUARIO PROPRIETARIO SELECIONAR SUA MOTO ---
 
 @app.post("/auth/select-manual")
-def select_manual_for_plan(body: SelectManualRequest, user: dict = Depends(auth.get_current_user)):
+def select_manual_for_plan(body: SelectManualRequest, user: dict = Depends(auth.get_current_active_user)):
     """Permite ao usuário Proprietário escolher qual manual acessar (uma única vez ou a qualquer momento)."""
     if user.get("is_admin"):
         raise HTTPException(400, "Admin não precisa selecionar manual")
@@ -639,7 +793,7 @@ def select_manual_for_plan(body: SelectManualRequest, user: dict = Depends(auth.
 def get_user_history(
     manual_id: str | None = Query(None),
     limit: int = Query(50, le=200),
-    user: dict = Depends(auth.get_current_user),
+    user: dict = Depends(auth.get_current_active_user),
 ):
     """Retorna o histórico de perguntas do usuário logado."""
     con = db.get_con()
@@ -786,7 +940,7 @@ def get_analytics(admin: dict = Depends(auth.get_current_admin_user)):
 
 
 @app.get("/auth/me")
-def me(user: dict = Depends(auth.get_current_user)):
+def me(user: dict = Depends(auth.get_current_active_user)):
     con = db.get_con()
     plan = None
     if user.get("plan_id"):
